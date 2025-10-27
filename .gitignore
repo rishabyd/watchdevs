@@ -1,0 +1,84 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Local env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Testing
+coverage
+
+# Turbo
+.turbo
+
+# Vercel
+.vercel
+
+# Build Outputs
+.next/
+out/
+build
+dist
+
+# TypeScript build artifacts (comprehensive)
+*.d.ts
+*.d.ts.map
+*.js.map
+*.tsbuildinfo
+
+# Compiled JavaScript files in source directories
+apps/**/*.js
+packages/**/*.js
+!apps/**/src/**/*.config.js
+!packages/**/src/**/*.config.js
+
+# Next.js app specific build files
+apps/web/app/**/*.js
+apps/web/app/**/*.d.ts
+apps/web/app/**/*.d.ts.map
+
+# UI Components build artifacts
+packages/ui/src/**/*.js
+packages/ui/src/**/*.d.ts
+packages/ui/src/**/*.d.ts.map
+packages/ui/lib/**/*
+packages/ui/dist/**/*
+
+# Router API build artifacts
+apps/router-api/src/**/*.js
+apps/router-api/src/**/*.d.ts
+apps/router-api/src/**/*.d.ts.map
+apps/router-api/lib/**/*
+
+# AI SDK and smart router specific
+.ai-cache/
+.cache/
+
+# Debug
+npm-debug.log*
+
+# Misc
+.DS_Store
+*.pem
+
+# Prisma
+packages/database/generated
+
+# ESLint cache
+.eslintcache
+.zed/
+.vscode/
+
+# IDE files
+.vscode/settings.json
+.idea/
+
+# OS generated files
+Thumbs.db

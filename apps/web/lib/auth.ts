@@ -1,0 +1,107 @@
+import {
+  checkout,
+  dodopayments,
+  portal,
+  webhooks,
+} from "@dodopayments/better-auth";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import DodoPayments from "dodopayments";
+import { db } from "../db";
+import { resend } from "./helpers/email/resend";
+import {
+  handlePaymentFailed,
+  handlePaymentSucceeded,
+} from "./payments/one-time";
+import * as schema from "@/db/schema";
+
+export const dodoPayments = new DodoPayments({
+  bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
+  environment: "test_mode",
+});
+
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema,
+    usePlural: true,
+  }),
+
+  plugins: [
+    dodopayments({
+      client: dodoPayments,
+      createCustomerOnSignUp: true,
+      use: [
+        checkout({
+          products: [
+            {
+              productId: "pdt_ptFsKbWKcGsTJIKm8jwWi", // Forge Starter Pack ($9)
+              slug: "forge-starter-pack",
+            },
+            {
+              productId: "pdt_ytCHc8Vq5wgxCR3YLNxYE", // Forge Pro Pack ($25)
+              slug: "forge-pro-pack",
+            },
+          ],
+          successUrl: "/payment/status",
+          authenticatedUsersOnly: true,
+        }),
+        portal(),
+        webhooks({
+          webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
+          onPayload: async (payload) => {
+            console.log("Received webhook:", payload.type);
+            switch (payload.type) {
+              case "payment.succeeded":
+                await handlePaymentSucceeded(payload.data);
+                break;
+              case "payment.failed":
+                await handlePaymentFailed(payload.data);
+                break;
+              default:
+                console.log(`Unhandled webhook event: ${payload.type}`);
+            }
+          },
+        }),
+      ],
+    }),
+  ],
+
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          console.log(`New user created: ${user.email}. Creating wallet...`);
+
+          if (!user.id) {
+            console.error(
+              "User created but ID is missing. Cannot create wallet.",
+            );
+            return;
+          }
+
+          try {
+          } catch (error) {
+            console.error("Failed to create wallet for new user:", error);
+          }
+        },
+      },
+    },
+  },
+  trustedOrigins: ["http://localhost:3000"],
+  baseURL: process.env.BETTER_AUTH_URL!,
+
+  secret: process.env.BETTER_AUTH_SECRET!,
+  socialProviders: {
+    github: {
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      redirectURI: `${process.env.BETTER_AUTH_URL}/api/auth/callback/github`,
+    },
+  },
+  redirectTo: {
+    afterSignIn: "/",
+    afterSignUp: "/",
+    afterSignOut: "/sign-in",
+  },
+});
