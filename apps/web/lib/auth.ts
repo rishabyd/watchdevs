@@ -67,16 +67,14 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
+        after: async (user, ctx) => {
           console.log(`New user created: ${user.email}`);
-
           if (!user.id) {
             console.error("User created but ID is missing.");
             return;
           }
 
           try {
-            // Use prisma from import
             // await prisma.wallet.create({
             //   data: { userId: user.id }
             // });
@@ -84,6 +82,14 @@ export const auth = betterAuth({
             console.error("Failed to create resources for new user:", error);
           }
         },
+      },
+    },
+  },
+  user: {
+    additionalFields: {
+      username: {
+        type: "string",
+        required: true,
       },
     },
   },
@@ -98,6 +104,15 @@ export const auth = betterAuth({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       redirectURI: `${process.env.BETTER_AUTH_URL}/api/auth/callback/github`,
+      mapProfileToUser: (profile) => {
+        return {
+          email: profile.email,
+          name: profile.name || profile.login,
+          image: profile.avatar_url,
+          emailVerified: !!profile.email,
+          username: profile.login,
+        };
+      },
     },
   },
 

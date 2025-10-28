@@ -1,3 +1,4 @@
+import VideoCard from "@/components/content/video-card";
 import VideoPlayer from "@/components/content/video-player";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -14,6 +15,7 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-1 mt-9 flex-col">
       <VideoPlayer />
+      <VideoCard />
     </div>
   );
 }

@@ -1,17 +1,15 @@
 import VideoPlayer from "@/components/content/video-player";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
-export default async function VideoPage() {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const firstName = session?.user?.name || "User";
-  const userId = session?.user?.id;
-  console.log(userId);
-  console.log(firstName);
+type pageProps = {
+  params: { videoId: string };
+};
+
+export default async function VideoPage({ params }: pageProps) {
+  const videoId = params.videoId;
 
   return (
     <div className="flex flex-1 mt-9 flex-col">
-      <VideoPlayer />
+      <VideoPlayer playbackId={videoId} />
     </div>
   );
 }

@@ -7,10 +7,17 @@ import {
   CardContent,
   CardFooter,
 } from "@workspace/ui/components/card";
+import Image from "next/image";
 
-export default async function videoCard() {
+export default async function VideoCard({
+  thumbnailUrl,
+  creatorId,
+  playbackI,
+  id,
+}) {
   return (
-    <Card>
+    <Card className="rounded-none w-md bg-accent border-green-500">
+      {/*<Image src={} />*/}
       <CardHeader>
         <CardTitle>Card Title</CardTitle>
         <CardDescription>Card Description</CardDescription>

@@ -1,10 +1,6 @@
 import MuxPlayer from "@mux/mux-player-react";
 
-export default function WatchPage({
-  params,
-}: {
-  params: { playbackId: string };
-}) {
+export default function VideoPlayer({ playbackId }: { playbackId: string }) {
   return (
     <div className="max-w-5xl mx-auto p-6">
       <div className="relative bg-black">

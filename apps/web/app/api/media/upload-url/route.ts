@@ -1,4 +1,13 @@
+import { auth } from "@/lib/auth";
+import prisma from "@/lib/db";
+import { NextResponse } from "next/server";
+
 export async function POST(request: Request) {
+  const session = await auth.api.getSession({ headers: req.headers });
+  if (!session || !session.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const MUX_TOKEN_ID = process.env.MUX_TOKEN_ID;
     const MUX_TOKEN_SECRET = process.env.MUX_TOKEN_SECRET;
@@ -12,6 +21,18 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
+    await prisma.video.create({
+      data: {
+        muxAssetId: "",
+        userId: session.user.id,
+        visibility: body.visibility,
+        status: "PENDING",
+        title: body.title,
+        thumbnailUrl: body.thumbnailUrl ?? "",
+        description: body.description,
+      },
+    });
+
     const response = await fetch("https://api.mux.com/video/v1/uploads", {
       method: "POST",
       headers: {
@@ -21,9 +42,9 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         new_asset_settings: {
           playback_policies: ["public"],
-          video_quality: "basic", // Perfect for streaming-only
+          video_quality: "basic",
         },
-        cors_origin: "*", // Change to your domain in production
+        cors_origin: "*",
         test: false,
       }),
     });

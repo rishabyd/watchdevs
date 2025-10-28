@@ -6,6 +6,10 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+enum AccountType {
+  INDIVIDUAL
+  COMPANY
+}
 
 model User {
   id        String     @id @default(cuid())
@@ -14,6 +18,9 @@ model User {
   updatedAt DateTime   @updatedAt
 
   // Optional profile fields
+  accountType   AccountType @default(INDIVIDUAL)
+
+  username String @unique
   name          String?
   image         String?
   emailVerified Boolean @default(false)
@@ -105,7 +112,7 @@ model Video {
   description   String?
   thumbnailUrl  String?
   duration      Int?
-
+visibility VideoVisibleStatus @default(PUBLIC)
   status        VideoStatus @default(PROCESSING)
 
   viewCount     BigInt      @default(0)
@@ -125,9 +132,15 @@ model Video {
 enum VideoStatus {
   PROCESSING
   READY
+  PENDING
   FAILED
 }
 
+enum VideoVisibleStatus{
+PUBLIC
+PRIVATE
+
+}
 model Comment {
   id        Int      @id @default(autoincrement())
   videoId   Int
