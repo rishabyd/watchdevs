@@ -5,15 +5,13 @@ import {
   webhooks,
 } from "@dodopayments/better-auth";
 import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { prismaAdapter } from "better-auth/adapters/prisma";
 import DodoPayments from "dodopayments";
-import { db } from "../db";
-import { resend } from "./helpers/email/resend";
+import { prisma } from "./db";
 import {
   handlePaymentFailed,
   handlePaymentSucceeded,
 } from "./payments/one-time";
-import * as schema from "@/db/schema";
 
 export const dodoPayments = new DodoPayments({
   bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
@@ -21,10 +19,8 @@ export const dodoPayments = new DodoPayments({
 });
 
 export const auth = betterAuth({
-  database: drizzleAdapter(db, {
-    provider: "pg",
-    schema,
-    usePlural: true,
+  database: prismaAdapter(prisma, {
+    provider: "postgresql",
   }),
 
   plugins: [
@@ -35,11 +31,11 @@ export const auth = betterAuth({
         checkout({
           products: [
             {
-              productId: "pdt_ptFsKbWKcGsTJIKm8jwWi", // Forge Starter Pack ($9)
+              productId: "pdt_ptFsKbWKcGsTJIKm8jwWi",
               slug: "forge-starter-pack",
             },
             {
-              productId: "pdt_ytCHc8Vq5wgxCR3YLNxYE", // Forge Pro Pack ($25)
+              productId: "pdt_ytCHc8Vq5wgxCR3YLNxYE",
               slug: "forge-pro-pack",
             },
           ],
@@ -51,6 +47,7 @@ export const auth = betterAuth({
           webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_SECRET!,
           onPayload: async (payload) => {
             console.log("Received webhook:", payload.type);
+
             switch (payload.type) {
               case "payment.succeeded":
                 await handlePaymentSucceeded(payload.data);
@@ -71,27 +68,31 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user) => {
-          console.log(`New user created: ${user.email}. Creating wallet...`);
+          console.log(`New user created: ${user.email}`);
 
           if (!user.id) {
-            console.error(
-              "User created but ID is missing. Cannot create wallet.",
-            );
+            console.error("User created but ID is missing.");
             return;
           }
 
           try {
+            // Use prisma from import
+            // await prisma.wallet.create({
+            //   data: { userId: user.id }
+            // });
           } catch (error) {
-            console.error("Failed to create wallet for new user:", error);
+            console.error("Failed to create resources for new user:", error);
           }
         },
       },
     },
   },
-  trustedOrigins: ["http://localhost:3000"],
-  baseURL: process.env.BETTER_AUTH_URL!,
 
+  trustedOrigins: ["http://localhost:3000"],
+
+  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL!,
   secret: process.env.BETTER_AUTH_SECRET!,
+
   socialProviders: {
     github: {
       clientId: process.env.GITHUB_CLIENT_ID!,
@@ -99,9 +100,19 @@ export const auth = betterAuth({
       redirectURI: `${process.env.BETTER_AUTH_URL}/api/auth/callback/github`,
     },
   },
+
+  emailAndPassword: {
+    enabled: true,
+  },
+
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+  },
+
   redirectTo: {
     afterSignIn: "/",
     afterSignUp: "/",
     afterSignOut: "/sign-in",
   },
-});
+}) as ReturnType<typeof betterAuth>;

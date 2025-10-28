@@ -47,7 +47,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const mobile = useIsMobile();
   const { open } = useSidebar();
   return (
-    <Sidebar className="" variant="sidebar" collapsible="icon" {...props}>
+    <Sidebar defaultChecked variant="sidebar" collapsible="icon" {...props}>
       <SidebarHeader>
         <div className="flex items-center gap-2 my-1.5 ">
           <SidebarMenu className="flex-1 ">

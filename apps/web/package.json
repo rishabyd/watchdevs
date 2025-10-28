@@ -4,24 +4,14 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "build": "next build --turbopack",
-    "cf-typegen": "wrangler types --env-interface CloudflareEnv env.d.ts",
-    "check": "npm run build && tsc",
-    "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
-    "dev": "next dev",
+    "build": "next build ",
+    "dev": "next dev --turbopack",
     "lint": "next lint",
-    "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push",
+    "prisma:studio": "prisma studio",
     "start": "next start"
-  },
-  "cloudflare": {
-    "label": "Next.js Framework Starter",
-    "products": [
-      "Workers"
-    ],
-    "categories": [],
-    "preview_icon_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/05eee9e0-2c04-48fd-11bf-84e65f839000/public",
-    "preview_image_url": "https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/4e913a56-fd99-4372-0586-9f1364173100/preview",
-    "publish": true
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -29,8 +19,8 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@dodopayments/better-auth": "^1.2.0",
-    "@neondatabase/serverless": "^1.0.2",
-    "@opennextjs/cloudflare": "1.3.0",
+    "@mux/mux-player-react": "^3.7.0",
+    "@prisma/client": "^6.18.0",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -47,13 +37,13 @@
     "@repo/db": "workspace:*",
     "@tanstack/react-table": "^8.21.3",
     "@workspace/ui": "workspace:*",
-    "better-auth": "^1.3.12",
+    "better-auth": "^1.3.33",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "dodopayments": "^2.1.0",
-    "drizzle-orm": "^0.44.7",
     "next-themes": "^0.4.6",
+    "prisma": "^6.18.0",
     "recharts": "2.15.4",
     "resend": "^6.1.0",
     "sonner": "^2.0.7",
@@ -68,8 +58,6 @@
     "@types/react-dom": "^19.1.7",
     "@workspace/eslint-config": "workspace:^",
     "@workspace/typescript-config": "workspace:*",
-    "drizzle-kit": "^0.31.5",
-    "typescript": "5.9.2",
-    "wrangler": "4.21.x"
+    "typescript": "5.9.2"
   }
 }

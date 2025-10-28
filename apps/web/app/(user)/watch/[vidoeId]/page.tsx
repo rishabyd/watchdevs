@@ -2,10 +2,8 @@ import VideoPlayer from "@/components/content/video-player";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-export default async function DashboardPage() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+export default async function VideoPage() {
+  const session = await auth.api.getSession({ headers: await headers() });
   const firstName = session?.user?.name || "User";
   const userId = session?.user?.id;
   console.log(userId);
