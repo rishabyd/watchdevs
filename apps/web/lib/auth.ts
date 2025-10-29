@@ -7,7 +7,7 @@ import {
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import DodoPayments from "dodopayments";
-import { prisma } from "./db";
+import { prisma } from "@repo/db";
 import {
   handlePaymentFailed,
   handlePaymentSucceeded,
