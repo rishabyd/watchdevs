@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth";
-import prisma from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@repo/db";
 
 export async function GET(req: NextRequest) {
   const session = await auth.api.getSession({ headers: req.headers });

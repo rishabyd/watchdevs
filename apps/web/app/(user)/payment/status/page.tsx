@@ -1,6 +1,5 @@
 import { AnimatedCounter } from "@/components/payment/animated-counter";
 import { dodoPayments } from "@/lib/auth";
-import { getCreditsForProductId } from "@/lib/configs/products";
 import { Button } from "@workspace/ui/components/button";
 import { Card, CardContent } from "@workspace/ui/components/card";
 import { AlertTriangle, ArrowRight, Check } from "@workspace/ui/icons";
@@ -127,7 +126,7 @@ export default async function PaymentSuccessPage({
   const amount = payment.total_amount / 100;
   const currency = payment.currency.toUpperCase();
   const productId = payment.product_cart?.[0]?.product_id;
-  const creditsAdded = getCreditsForProductId(productId!);
+  const creditsAdded = 2;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-2xl overflow-auto bg-gradient-to-br from-green-600/20  via-background to-green-600/20 p-4 ">

@@ -1,5 +1,5 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/db";
+import { prisma } from "@repo/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -42,5 +42,3 @@ export async function DELETE(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
-
-

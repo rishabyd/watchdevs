@@ -1,9 +1,9 @@
 import { auth } from "@/lib/auth";
-import { prisma } from "@/db";
+import { prisma } from "@repo/db";
 import { NextRequest, NextResponse } from "next/server";
 
 async function geolocateIP(
-  ip: string
+  ip: string,
 ): Promise<{ country: string; state: string; city: string }> {
   try {
     const res = await fetch(`https://ipapi.co/${ip}/json/`);
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         city: city || (country === "IN" ? "Mumbai" : "San Francisco"),
       };
       console.log(
-        `Vercel geo for ${userId}: ${billingGeo.country}/${billingGeo.state}/${billingGeo.city}`
+        `Vercel geo for ${userId}: ${billingGeo.country}/${billingGeo.state}/${billingGeo.city}`,
       );
     } else {
       const currentSession = await prisma.session.findFirst({
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
       ) {
         billingGeo = await geolocateIP(currentSession.ipAddress);
         console.log(
-          `Local dev geolocated IP for ${userId}: ${billingGeo.country}`
+          `Local dev geolocated IP for ${userId}: ${billingGeo.country}`,
         );
       } else {
         billingGeo = { country: "US", state: "CA", city: "San Francisco" };
@@ -82,36 +82,36 @@ export async function POST(req: NextRequest) {
 
     const referenceId = `order_${Date.now()}_${userId}`;
     // Create Dodo checkout
-    const checkout = await auth.api.checkout({
-      request: req,
-      headers: req.headers,
-      body: {
-        slug,
-        product_id,
-        quantity: 1,
-        customer: {
-          email: session.user.email,
-          name: session.user.name || "User",
-        },
-        billing: {
-          country: billingGeo.country,
-          city: billingGeo.city,
-          state: billingGeo.state,
-          street: "123 Main St",
-          zipcode: billingGeo.country === "IN" ? "400001" : "94103",
-        },
-        referenceId,
-        allowedPaymentMethods: allowedMethods,
-      },
-    });
+    // const checkout = await auth.api.checkout({
+    //   request: req,
+    //   headers: req.headers,
+    //   body: {
+    //     slug,
+    //     product_id,
+    //     quantity: 1,
+    //     customer: {
+    //       email: session.user.email,
+    //       name: session.user.name || "User",
+    //     },
+    //     billing: {
+    //       country: billingGeo.country,
+    //       city: billingGeo.city,
+    //       state: billingGeo.state,
+    //       street: "123 Main St",
+    //       zipcode: billingGeo.country === "IN" ? "400001" : "94103",
+    //     },
+    //     referenceId,
+    //     allowedPaymentMethods: allowedMethods,
+    //   },
+    // });
 
-    if (!checkout?.url) {
-      console.error("Dodo checkout failed:", checkout);
-      return NextResponse.json({ error: "Checkout failed" }, { status: 400 });
-    }
+    // if (!checkout?.url) {
+    //   console.error("Dodo checkout failed:", checkout);
+    //   return NextResponse.json({ error: "Checkout failed" }, { status: 400 });
+    // }
 
-    console.log(`Checkout created for ${userId}: ${checkout.url}`);
-    return NextResponse.json({ url: checkout.url });
+    // console.log(`Checkout created for ${userId}: ${checkout.url}`);
+    // return NextResponse.json({ url: checkout.url });
   } catch (err) {
     console.error("API error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
