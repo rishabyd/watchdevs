@@ -1,7 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   transpilePackages: ["@workspace/ui", "@repo/db"],
-
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "r2.braxius.com",
+      },
+    ],
+  },
   async headers() {
     return [
       {
