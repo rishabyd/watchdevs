@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import imageCompression from "browser-image-compression"; // ADD THIS
 import {
   Select,
   SelectTrigger,
@@ -23,8 +24,9 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "@workspace/ui/components/radio-group";
-import { Upload, Badge, X, Video, Loader2 } from "@workspace/ui/icons";
+import { Upload, X, Video, Loader2 } from "@workspace/ui/icons";
 import { Label } from "@workspace/ui/components/label";
+import { Badge } from "@workspace/ui/components/badge";
 
 interface VideoMetadata {
   title: string;
@@ -34,19 +36,20 @@ interface VideoMetadata {
   visibility: "public" | "unlisted" | "private";
   thumbnail?: File;
 }
+
 const VISIBILITY_OPTIONS = [
   {
     value: "public" as const,
     label: "Public",
     desc: "Anyone can watch your video",
   },
-
   {
     value: "private" as const,
     label: "Private",
     desc: "Only you can watch",
   },
 ];
+
 const CATEGORIES = [
   { value: "tutorial", label: "Tutorial" },
   { value: "project", label: "Project Showcase" },
@@ -55,6 +58,7 @@ const CATEGORIES = [
   { value: "devops", label: "DevOps" },
   { value: "other", label: "Other" },
 ];
+
 export default function StudioUpload() {
   const router = useRouter();
   const [step, setStep] = useState<"select" | "details" | "uploading">(
@@ -86,29 +90,51 @@ export default function StudioUpload() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.type.startsWith("video/")) {
-        setFile(selectedFile);
-        const titleFromFile = selectedFile.name.replace(/\.[^/.]+$/, "");
-        setMetadata((prev) => ({ ...prev, title: titleFromFile }));
-        setStep("details");
-        setError(null);
-      } else {
+      // Validate file type
+      if (!selectedFile.type.startsWith("video/")) {
         setError("Please select a valid video file");
+        return;
       }
+
+      // Validate file size (max 5GB)
+      const MAX_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
+      if (selectedFile.size > MAX_SIZE) {
+        setError("Video too large. Maximum size is 5GB");
+        return;
+      }
+
+      setFile(selectedFile);
+      const titleFromFile = selectedFile.name.replace(/\.[^/.]+$/, "");
+      setMetadata((prev) => ({ ...prev, title: titleFromFile }));
+      setStep("details");
+      setError(null);
     }
   };
 
   // Handle custom thumbnail upload
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.type.startsWith("image/")) {
-      setMetadata((prev) => ({ ...prev, thumbnail: file }));
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setThumbnailPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file || !file.type.startsWith("image/")) {
+      setError("Please select a valid image file");
+      return;
     }
+
+    // Validate thumbnail size (before compression)
+    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    if (file.size > MAX_SIZE) {
+      setError("Thumbnail too large. Maximum size is 10MB");
+      return;
+    }
+
+    setMetadata((prev) => ({ ...prev, thumbnail: file }));
+
+    // Show preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setThumbnailPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setError(null);
   };
 
   // Handle tag addition
@@ -141,13 +167,14 @@ export default function StudioUpload() {
       metadata.title.trim().length >= 3 &&
       metadata.description.trim().length >= 10 &&
       metadata.category &&
+      metadata.thumbnail && // Require thumbnail
       file
     );
   };
 
-  // Upload to Mux
+  // Upload to R2 + Mux
   const uploadVideo = async () => {
-    if (!file || !canUpload()) return;
+    if (!file || !metadata.thumbnail || !canUpload()) return;
 
     setStep("uploading");
     setUploading(true);
@@ -155,65 +182,97 @@ export default function StudioUpload() {
     setError(null);
 
     try {
-      // Step 1: Get upload URL from backend
-      const response = await fetch("/api/media/upload-url", {
+      // Step 1: Compress thumbnail (client-side, saves bandwidth)
+      setProgress(5);
+      const compressedThumbnail = await imageCompression(metadata.thumbnail, {
+        maxSizeMB: 0.2, // Target 200KB
+        maxWidthOrHeight: 1280,
+        useWebWorker: true,
+        fileType: "image/webp",
+        initialQuality: 0.8,
+      });
+
+      console.log(
+        `Thumbnail: ${(metadata.thumbnail.size / 1024).toFixed(0)}KB → ${(compressedThumbnail.size / 1024).toFixed(0)}KB`,
+      );
+
+      // Step 2: Submit metadata and get upload URLs
+      setProgress(10);
+      const createResponse = await fetch("/api/media/upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: metadata.title,
+          description: metadata.description,
+          category: metadata.category,
+          tags: metadata.tags,
+          visibility: metadata.visibility,
+          thumbnailFileName: compressedThumbnail.name || "thumbnail.webp",
+          thumbnailFileType: compressedThumbnail.type,
+          thumbnailFileSize: compressedThumbnail.size,
+        }),
       });
 
-      if (!response.ok) throw new Error("Failed to get upload URL");
+      if (!createResponse.ok) {
+        const error = await createResponse.json();
+        throw new Error(error.error || "Failed to create video");
+      }
 
-      const { uploadUrl, assetId } = await response.json();
+      const { videoId, uploadUrls } = await createResponse.json();
 
-      // Step 2: Upload to Mux with progress
-      const xhr = new XMLHttpRequest();
-
-      xhr.upload.addEventListener("progress", (e) => {
-        if (e.lengthComputable) {
-          const percentComplete = (e.loaded / e.total) * 100;
-          setProgress(Math.round(percentComplete));
-        }
+      // Step 3: Upload thumbnail to R2 (fast, small file)
+      setProgress(15);
+      const thumbnailUploadPromise = fetch(uploadUrls.thumbnail, {
+        method: "PUT",
+        body: compressedThumbnail,
+        headers: { "Content-Type": compressedThumbnail.type },
+      }).then((res) => {
+        if (!res.ok) throw new Error("Thumbnail upload failed");
       });
 
-      xhr.addEventListener("load", async () => {
-        if (xhr.status === 200 || xhr.status === 201) {
-          // Step 3: Save video + metadata to database
-          const videoData = new FormData();
-          videoData.append("muxAssetId", assetId);
-          videoData.append("title", metadata.title);
-          videoData.append("description", metadata.description);
-          videoData.append("tags", JSON.stringify(metadata.tags));
-          videoData.append("category", metadata.category);
-          videoData.append("visibility", metadata.visibility);
-          videoData.append("filename", file.name);
+      // Step 4: Upload video to Mux (with progress tracking)
+      setProgress(20);
+      const videoUploadPromise = new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
 
-          if (metadata.thumbnail) {
-            videoData.append("thumbnail", metadata.thumbnail);
+        xhr.upload.addEventListener("progress", (e) => {
+          if (e.lengthComputable) {
+            const percentComplete = (e.loaded / e.total) * 100;
+            // Map to 20-95% range (leave 5% for processing)
+            setProgress(20 + Math.round(percentComplete * 0.75));
           }
+        });
 
-          const saveResponse = await fetch("/api/videos", {
-            method: "POST",
-            body: videoData,
-          });
+        xhr.addEventListener("load", () => {
+          if (xhr.status === 200 || xhr.status === 201) {
+            resolve();
+          } else {
+            reject(new Error("Video upload failed"));
+          }
+        });
 
-          if (!saveResponse.ok) throw new Error("Failed to save video");
+        xhr.addEventListener("error", () => {
+          reject(new Error("Network error during video upload"));
+        });
 
-          const { videoId } = await saveResponse.json();
+        xhr.addEventListener("abort", () => {
+          reject(new Error("Video upload cancelled"));
+        });
 
-          router.push(`/studio/videos/${videoId}`);
-        } else {
-          throw new Error("Upload failed");
-        }
+        xhr.open("PUT", uploadUrls.video);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.send(file);
       });
 
-      xhr.addEventListener("error", () => {
-        throw new Error("Network error during upload");
-      });
+      // Wait for both uploads to complete
+      await Promise.all([thumbnailUploadPromise, videoUploadPromise]);
 
-      xhr.open("PUT", uploadUrl);
-      xhr.setRequestHeader("Content-Type", file.type);
-      xhr.send(file);
+      setProgress(100);
+      setTimeout(() => {
+        router.push(`/`);
+      }, 1000);
     } catch (err) {
+      console.error("Upload error:", err);
       setError(err instanceof Error ? err.message : "Upload failed");
       setUploading(false);
       setStep("details");
@@ -229,8 +288,8 @@ export default function StudioUpload() {
           Share your content with the dev community
         </p>
 
-        <Card className="border-2 border-dashed hover:border-primary transition-colors cursor-pointer">
-          <CardContent className="p-12">
+        <Card className="border-2 duration-500 border-dashed hover:border-primary transition-colors cursor-pointer rounded-none">
+          <CardContent className="p-12 ">
             <input
               type="file"
               accept="video/*"
@@ -248,10 +307,10 @@ export default function StudioUpload() {
                     Select video to upload
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Or drag and drop a video file
+                    Or drag and drop a video file (max 5GB)
                   </p>
                 </div>
-                <Button type="button" size="lg">
+                <Button className="rounded-none" size="lg">
                   Select File
                 </Button>
               </div>
@@ -278,6 +337,7 @@ export default function StudioUpload() {
             onClick={() => {
               setStep("select");
               setFile(null);
+              setThumbnailPreview(null);
               setMetadata({
                 title: "",
                 description: "",
@@ -339,6 +399,7 @@ export default function StudioUpload() {
               </p>
             </div>
 
+            {/* Category */}
             <div className="space-y-2">
               <Label>
                 Category <span className="text-destructive">*</span>
@@ -397,16 +458,16 @@ export default function StudioUpload() {
                   Add
                 </Button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap  gap-2">
                 {metadata.tags.map((tag) => (
-                  <Badge key={tag} className="gap-1">
-                    #{tag}
-                    <button
+                  <Badge key={tag} className="p-0  rounded-none">
+                    <Button
                       onClick={() => removeTag(tag)}
-                      className="hover:text-destructive"
+                      className="hover:text-destructive  border-none bg-transparent rounded-none  cursor-pointer"
                     >
-                      <X className="w-3 h-3" />
-                    </button>
+                      {tag}
+                      <X />
+                    </Button>
                   </Badge>
                 ))}
               </div>
@@ -431,14 +492,14 @@ export default function StudioUpload() {
                     htmlFor={option.value}
                     className="flex items-start p-2 px-4 gap-3 border rounded-none cursor-pointer hover:bg-accent transition-colors"
                   >
-                    <div className="h-full flex items-center  justify-center">
+                    <div className="h-full flex items-center justify-center">
                       <RadioGroupItem
                         value={option.value}
                         id={option.value}
-                        className=" bg-transparent  "
+                        className="bg-transparent"
                       />
                     </div>
-                    <div className="flex-1 ">
+                    <div className="flex-1">
                       <p className="font-medium">{option.label}</p>
                       <p className="text-sm text-muted-foreground">
                         {option.desc}
@@ -449,9 +510,14 @@ export default function StudioUpload() {
               </RadioGroup>
             </div>
 
-            {/* Custom Thumbnail */}
+            {/* Custom Thumbnail - REQUIRED */}
             <div className="space-y-2">
-              <Label>Custom Thumbnail (Optional)</Label>
+              <Label>
+                Thumbnail <span className="text-destructive">*</span>
+              </Label>
+              <p className="text-xs text-muted-foreground mb-2">
+                Upload a custom thumbnail for your video
+              </p>
               <input
                 type="file"
                 accept="image/*"
@@ -469,7 +535,7 @@ export default function StudioUpload() {
                   <img
                     src={thumbnailPreview}
                     alt="Thumbnail preview"
-                    className="w-48 h-27 object-cover rounded-lg border"
+                    className="w-48 h-27 object-cover rounded-none border"
                   />
                 </div>
               )}
@@ -477,7 +543,7 @@ export default function StudioUpload() {
           </div>
 
           {/* Preview Section */}
-          <div className="lg:col-span-1 ">
+          <div className="lg:col-span-1">
             <div className="sticky top-6 space-y-6">
               <div>
                 <h3 className="font-semibold mb-3">Preview</h3>
@@ -491,7 +557,12 @@ export default function StudioUpload() {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <Video className="w-12 h-12 text-muted-foreground" />
+                        <div className="text-center p-4">
+                          <Video className="w-12 h-12 text-muted-foreground mx-auto mb-2" />
+                          <p className="text-xs text-muted-foreground">
+                            Upload thumbnail
+                          </p>
+                        </div>
                       )}
                     </div>
                     <p className="font-medium text-sm line-clamp-2">
@@ -513,6 +584,11 @@ export default function StudioUpload() {
                 >
                   Publish Video
                 </Button>
+                {!metadata.thumbnail && (
+                  <p className="text-xs text-destructive text-center">
+                    Thumbnail required to publish
+                  </p>
+                )}
                 <p className="text-xs text-muted-foreground text-center">
                   By publishing, you agree to our terms of service
                 </p>
@@ -529,17 +605,28 @@ export default function StudioUpload() {
     <div className="max-w-2xl mx-auto p-6">
       <div className="text-center space-y-6">
         <h1 className="text-3xl font-bold">Uploading Video</h1>
-        <p className="text-muted-foreground">Please don't close this page</p>
+        <p className="text-muted-foreground">
+          Please don't close this page while uploading
+        </p>
 
         <div className="space-y-2">
           <Progress value={progress} className="h-3" />
           <p className="text-lg font-semibold">{progress}%</p>
+          {progress < 20 && (
+            <p className="text-sm text-muted-foreground">Preparing upload...</p>
+          )}
+          {progress >= 20 && progress < 95 && (
+            <p className="text-sm text-muted-foreground">Uploading video...</p>
+          )}
+          {progress >= 95 && (
+            <p className="text-sm text-muted-foreground">Finalizing...</p>
+          )}
         </div>
 
         {progress === 100 && (
           <div className="flex items-center justify-center gap-2 text-primary">
             <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Processing...</span>
+            <span>Upload successful! Redirecting to home...</span>
           </div>
         )}
 
@@ -550,7 +637,10 @@ export default function StudioUpload() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setStep("details")}
+                onClick={() => {
+                  setStep("details");
+                  setError(null);
+                }}
               >
                 Try again
               </Button>
