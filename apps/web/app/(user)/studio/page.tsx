@@ -2,6 +2,29 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@workspace/ui/components/select";
+import { Alert, AlertDescription } from "@workspace/ui/components/alert";
+import { Textarea } from "@workspace/ui/components/textarea";
+import { Button } from "@workspace/ui/components/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+} from "@workspace/ui/components/card";
+import { Input } from "@workspace/ui/components/input";
+import { Progress } from "@workspace/ui/components/progress";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@workspace/ui/components/radio-group";
+import { Upload, Badge, X, Video, Loader2 } from "@workspace/ui/icons";
+import { Label } from "@workspace/ui/components/label";
 
 interface VideoMetadata {
   title: string;
@@ -11,7 +34,27 @@ interface VideoMetadata {
   visibility: "public" | "unlisted" | "private";
   thumbnail?: File;
 }
+const VISIBILITY_OPTIONS = [
+  {
+    value: "public" as const,
+    label: "Public",
+    desc: "Anyone can watch your video",
+  },
 
+  {
+    value: "private" as const,
+    label: "Private",
+    desc: "Only you can watch",
+  },
+];
+const CATEGORIES = [
+  { value: "tutorial", label: "Tutorial" },
+  { value: "project", label: "Project Showcase" },
+  { value: "web-dev", label: "Web Development" },
+  { value: "mobile-dev", label: "Mobile Development" },
+  { value: "devops", label: "DevOps" },
+  { value: "other", label: "Other" },
+];
 export default function StudioUpload() {
   const router = useRouter();
   const [step, setStep] = useState<"select" | "details" | "uploading">(
@@ -45,7 +88,6 @@ export default function StudioUpload() {
     if (selectedFile) {
       if (selectedFile.type.startsWith("video/")) {
         setFile(selectedFile);
-        // Auto-populate title from filename
         const titleFromFile = selectedFile.name.replace(/\.[^/.]+$/, "");
         setMetadata((prev) => ({ ...prev, title: titleFromFile }));
         setStep("details");
@@ -158,7 +200,6 @@ export default function StudioUpload() {
 
           const { videoId } = await saveResponse.json();
 
-          // Redirect to video page or dashboard
           router.push(`/studio/videos/${videoId}`);
         } else {
           throw new Error("Upload failed");
@@ -184,48 +225,44 @@ export default function StudioUpload() {
     return (
       <div className="max-w-4xl mx-auto p-6">
         <h1 className="text-3xl font-bold mb-2">Upload Video</h1>
-        <p className="text-gray-600 mb-8">
+        <p className="text-muted-foreground mb-8">
           Share your content with the dev community
         </p>
 
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-12 text-center hover:border-blue-500 transition-colors">
-          <input
-            type="file"
-            accept="video/*"
-            onChange={handleFileChange}
-            className="hidden"
-            id="video-upload"
-          />
-          <label htmlFor="video-upload" className="cursor-pointer">
-            <div className="mb-4">
-              <svg
-                className="w-16 h-16 mx-auto text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                />
-              </svg>
-            </div>
-            <p className="text-xl font-semibold mb-2">Select video to upload</p>
-            <p className="text-sm text-gray-500">
-              Or drag and drop a video file
-            </p>
-            <button className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-              Select File
-            </button>
-          </label>
-        </div>
+        <Card className="border-2 border-dashed hover:border-primary transition-colors cursor-pointer">
+          <CardContent className="p-12">
+            <input
+              type="file"
+              accept="video/*"
+              onChange={handleFileChange}
+              className="hidden"
+              id="video-upload"
+            />
+            <label htmlFor="video-upload" className="cursor-pointer">
+              <div className="flex flex-col items-center text-center space-y-4">
+                <div className="rounded-full bg-primary/10 p-4">
+                  <Upload className="w-8 h-8 text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <p className="text-xl font-semibold">
+                    Select video to upload
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Or drag and drop a video file
+                  </p>
+                </div>
+                <Button type="button" size="lg">
+                  Select File
+                </Button>
+              </div>
+            </label>
+          </CardContent>
+        </Card>
 
         {error && (
-          <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
-          </div>
+          <Alert variant="destructive" className="mt-4">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
       </div>
     );
@@ -236,7 +273,8 @@ export default function StudioUpload() {
     return (
       <div className="max-w-5xl mx-auto p-6">
         <div className="mb-6">
-          <button
+          <Button
+            variant="link"
             onClick={() => {
               setStep("select");
               setFile(null);
@@ -248,10 +286,10 @@ export default function StudioUpload() {
                 visibility: "public",
               });
             }}
-            className="text-blue-600 hover:underline flex items-center gap-2"
+            className="px-0"
           >
             ← Change video
-          </button>
+          </Button>
         </div>
 
         <h1 className="text-3xl font-bold mb-8">Video Details</h1>
@@ -260,31 +298,33 @@ export default function StudioUpload() {
           {/* Form Section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Title */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Title <span className="text-red-500">*</span>
-              </label>
-              <input
+            <div className="space-y-2">
+              <Label>
+                Title <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="title"
                 type="text"
                 value={metadata.title}
                 onChange={(e) =>
                   setMetadata({ ...metadata, title: e.target.value })
                 }
+                className="rounded-none"
                 placeholder="Add a title that describes your video"
                 maxLength={100}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground">
                 {metadata.title.length}/100
               </p>
             </div>
 
             {/* Description */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Description <span className="text-red-500">*</span>
-              </label>
-              <textarea
+            <div className="space-y-2">
+              <Label>
+                Description <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="description"
                 value={metadata.description}
                 onChange={(e) =>
                   setMetadata({ ...metadata, description: e.target.value })
@@ -292,136 +332,126 @@ export default function StudioUpload() {
                 placeholder="Tell viewers about your video"
                 rows={6}
                 maxLength={5000}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="resize-none rounded-none"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground">
                 {metadata.description.length}/5000
               </p>
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Category <span className="text-red-500">*</span>
-              </label>
-              <select
+            <div className="space-y-2">
+              <Label>
+                Category <span className="text-destructive">*</span>
+              </Label>
+              <Select
                 value={metadata.category}
-                onChange={(e) =>
-                  setMetadata({ ...metadata, category: e.target.value })
+                onValueChange={(value) =>
+                  setMetadata({ ...metadata, category: value })
                 }
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Select a category</option>
-                <option value="web-dev">Web Development</option>
-                <option value="mobile-dev">Mobile Development</option>
-                <option value="data-science">Data Science & ML</option>
-                <option value="devops">DevOps & Infrastructure</option>
-                <option value="programming">Programming & Algorithms</option>
-                <option value="career">Career & Interview Prep</option>
-                <option value="tools">Tools & Productivity</option>
-                <option value="tutorial">Tutorial</option>
-                <option value="project">Project Showcase</option>
-                <option value="other">Other</option>
-              </select>
+                <SelectTrigger
+                  className="rounded-none cursor-pointer"
+                  id="category"
+                >
+                  <SelectValue placeholder="Select a category" />
+                </SelectTrigger>
+                <SelectContent className="rounded-none">
+                  {CATEGORIES.map((cat) => (
+                    <SelectItem
+                      className="rounded-none"
+                      key={cat.value}
+                      value={cat.value}
+                    >
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Tags */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Tags (Max 10)
-              </label>
-              <div className="flex gap-2 mb-2">
-                <input
+            <div className="space-y-2">
+              <Label>Tags (Max 10)</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="tags"
                   type="text"
+                  className="rounded-none"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
-                  onKeyPress={(e) =>
-                    e.key === "Enter" && (e.preventDefault(), addTag())
-                  }
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addTag();
+                    }
+                  }}
                   placeholder="Add tags (press Enter)"
                   disabled={metadata.tags.length >= 10}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50"
                 />
-                <button
+                <Button
+                  className="rounded-none"
+                  type="button"
                   onClick={addTag}
                   disabled={metadata.tags.length >= 10 || !tagInput.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Add
-                </button>
+                </Button>
               </div>
               <div className="flex flex-wrap gap-2">
                 {metadata.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm"
-                  >
+                  <Badge key={tag} className="gap-1">
                     #{tag}
                     <button
                       onClick={() => removeTag(tag)}
-                      className="hover:text-blue-900"
+                      className="hover:text-destructive"
                     >
-                      ×
+                      <X className="w-3 h-3" />
                     </button>
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </div>
 
             {/* Visibility */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Visibility
-              </label>
-              <div className="space-y-2">
-                {[
-                  {
-                    value: "public",
-                    label: "Public",
-                    desc: "Anyone can watch your video",
-                  },
-                  {
-                    value: "unlisted",
-                    label: "Unlisted",
-                    desc: "Anyone with the link can watch",
-                  },
-                  {
-                    value: "private",
-                    label: "Private",
-                    desc: "Only you can watch",
-                  },
-                ].map((option) => (
+            <div className=" ">
+              <Label>Visibility</Label>
+              <RadioGroup
+                className=""
+                value={metadata.visibility}
+                onValueChange={(value) =>
+                  setMetadata({
+                    ...metadata,
+                    visibility: value as VideoMetadata["visibility"],
+                  })
+                }
+              >
+                {VISIBILITY_OPTIONS.map((option) => (
                   <label
                     key={option.value}
-                    className="flex items-start gap-3 p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
+                    htmlFor={option.value}
+                    className="flex items-start p-2 px-4 gap-3 border rounded-none cursor-pointer hover:bg-accent transition-colors"
                   >
-                    <input
-                      type="radio"
-                      name="visibility"
-                      value={option.value}
-                      checked={metadata.visibility === option.value}
-                      onChange={(e) =>
-                        setMetadata({
-                          ...metadata,
-                          visibility: e.target.value as any,
-                        })
-                      }
-                      className="mt-1"
-                    />
-                    <div>
+                    <div className="h-full flex items-center  justify-center">
+                      <RadioGroupItem
+                        value={option.value}
+                        id={option.value}
+                        className=" bg-transparent  "
+                      />
+                    </div>
+                    <div className="flex-1 ">
                       <p className="font-medium">{option.label}</p>
-                      <p className="text-sm text-gray-500">{option.desc}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {option.desc}
+                      </p>
                     </div>
                   </label>
                 ))}
-              </div>
+              </RadioGroup>
             </div>
 
             {/* Custom Thumbnail */}
-            <div>
-              <label className="block text-sm font-semibold mb-2">
-                Custom Thumbnail (Optional)
-              </label>
+            <div className="space-y-2">
+              <Label>Custom Thumbnail (Optional)</Label>
               <input
                 type="file"
                 accept="image/*"
@@ -429,12 +459,11 @@ export default function StudioUpload() {
                 className="hidden"
                 id="thumbnail-upload"
               />
-              <label
-                htmlFor="thumbnail-upload"
-                className="inline-block px-4 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50"
-              >
-                {metadata.thumbnail ? "Change Thumbnail" : "Upload Thumbnail"}
-              </label>
+              <Button variant="outline" className="rounded-none" asChild>
+                <label htmlFor="thumbnail-upload" className="cursor-pointer">
+                  {metadata.thumbnail ? "Change Thumbnail" : "Upload Thumbnail"}
+                </label>
+              </Button>
               {thumbnailPreview && (
                 <div className="mt-3">
                   <img
@@ -448,52 +477,43 @@ export default function StudioUpload() {
           </div>
 
           {/* Preview Section */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 ">
             <div className="sticky top-6 space-y-6">
               <div>
                 <h3 className="font-semibold mb-3">Preview</h3>
-                <div className="border rounded-lg p-4 bg-gray-50">
-                  <div className="aspect-video bg-gray-200 rounded mb-3 flex items-center justify-center">
-                    {thumbnailPreview ? (
-                      <img
-                        src={thumbnailPreview}
-                        alt="Thumbnail"
-                        className="w-full h-full object-cover rounded"
-                      />
-                    ) : (
-                      <svg
-                        className="w-12 h-12 text-gray-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+                <Card className="rounded-none">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="aspect-video bg-muted rounded flex items-center justify-center overflow-hidden">
+                      {thumbnailPreview ? (
+                        <img
+                          src={thumbnailPreview}
+                          alt="Thumbnail"
+                          className="w-full h-full object-cover"
                         />
-                      </svg>
-                    )}
-                  </div>
-                  <p className="font-medium text-sm line-clamp-2">
-                    {metadata.title || "Untitled Video"}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : ""}
-                  </p>
-                </div>
+                      ) : (
+                        <Video className="w-12 h-12 text-muted-foreground" />
+                      )}
+                    </div>
+                    <p className="font-medium text-sm line-clamp-2">
+                      {metadata.title || "Untitled Video"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {file ? `${(file.size / 1024 / 1024).toFixed(2)} MB` : ""}
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
 
               <div className="space-y-3">
-                <button
+                <Button
                   onClick={uploadVideo}
                   disabled={!canUpload()}
-                  className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                  className="w-full rounded-none"
+                  size="lg"
                 >
                   Publish Video
-                </button>
-                <p className="text-xs text-gray-500 text-center">
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
                   By publishing, you agree to our terms of service
                 </p>
               </div>
@@ -509,51 +529,33 @@ export default function StudioUpload() {
     <div className="max-w-2xl mx-auto p-6">
       <div className="text-center space-y-6">
         <h1 className="text-3xl font-bold">Uploading Video</h1>
-        <p className="text-gray-600">Please don't close this page</p>
+        <p className="text-muted-foreground">Please don't close this page</p>
 
-        <div className="w-full bg-gray-200 rounded-full h-3">
-          <div
-            className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
+        <div className="space-y-2">
+          <Progress value={progress} className="h-3" />
+          <p className="text-lg font-semibold">{progress}%</p>
         </div>
-        <p className="text-lg font-semibold">{progress}%</p>
 
         {progress === 100 && (
-          <div className="flex items-center justify-center gap-2 text-blue-600">
-            <svg
-              className="animate-spin h-5 w-5"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
+          <div className="flex items-center justify-center gap-2 text-primary">
+            <Loader2 className="h-5 w-5 animate-spin" />
             <span>Processing...</span>
           </div>
         )}
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-600">{error}</p>
-            <button
-              onClick={() => setStep("details")}
-              className="mt-2 text-blue-600 hover:underline text-sm"
-            >
-              Try again
-            </button>
-          </div>
+          <Alert variant="destructive">
+            <AlertDescription>
+              <p className="mb-2">{error}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setStep("details")}
+              >
+                Try again
+              </Button>
+            </AlertDescription>
+          </Alert>
         )}
       </div>
     </div>

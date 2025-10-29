@@ -5,6 +5,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+
 }
 enum AccountType {
   INDIVIDUAL
@@ -105,16 +107,18 @@ model Video {
   id            Int         @id @default(autoincrement())
   userId        String
   user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  muxUploadId String?
+  muxAssetId String? @unique
 
-  muxAssetId    String      @unique
   muxPlaybackId String?
   title         String
   description   String?
-  thumbnailUrl  String?
+  thumbnailKey  String?
   duration      Int?
 visibility VideoVisibleStatus @default(PUBLIC)
   status        VideoStatus @default(PROCESSING)
-
+  category String?
+  tags          String[] @default([])
   viewCount     BigInt      @default(0)
   likeCount     Int         @default(0)
   commentCount  Int         @default(0)
