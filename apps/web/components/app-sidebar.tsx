@@ -8,31 +8,19 @@ import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
 } from "@workspace/ui/components/sidebar";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
-import {
-  ChartNoAxesCombined,
-  Lock,
-  Logs,
-  Plug,
-  Wallet,
-} from "@workspace/ui/icons";
-import Image from "next/image";
-import Link from "next/link";
+import { House, Plug } from "@workspace/ui/icons";
 import { NavUser } from "./nav-user";
+import { usePathname } from "next/navigation";
 
 const navData = {
   navMain: [
     {
       title: "Home",
       url: "/",
-      icon: ChartNoAxesCombined,
+      icon: House,
     },
     {
       title: "You",
@@ -44,27 +32,16 @@ const navData = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session } = useSession();
-  const mobile = useIsMobile();
-  const { open } = useSidebar();
+  const pathname = usePathname();
+  const a = pathname.includes("/watch");
   return (
-    <Sidebar defaultChecked variant="sidebar" collapsible="icon" {...props}>
-      <SidebarHeader>
-        <div className="flex items-center gap-2 my-1.5 ">
-          <SidebarMenu className="flex-1 ">
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                className="data-[slot=sidebar-menu-button]:!p-1.5 hover:bg-primary/5 "
-              >
-                <Link href="/" className="h-14 ">
-                  <span className=" font-medium">stream</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </div>
-      </SidebarHeader>
-      <SidebarContent>
+    <Sidebar
+      defaultChecked
+      variant="sidebar"
+      collapsible={a ? "offcanvas" : "icon"}
+      {...props}
+    >
+      <SidebarContent className="mt-20">
         <NavMain items={navData.navMain} />
       </SidebarContent>
       <SidebarFooter>

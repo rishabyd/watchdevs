@@ -24,8 +24,8 @@ export function NavMain({
   const pathname = usePathname();
   return (
     <SidebarGroup>
-      <SidebarGroupContent className="flex  flex-col gap-2">
-        <SidebarMenu>
+      <SidebarGroupContent className="flex  flex-col ">
+        <SidebarMenu className="gap-2">
           {items.map((item) => {
             const isActive =
               pathname === item.url ||
@@ -43,7 +43,7 @@ export function NavMain({
                   }
                 >
                   <Link
-                    className="px-3  transition-all duration-300 my-0.5"
+                    className="px-3 rounded-none transition-all duration-300 p-5"
                     href={item.url as any}
                   >
                     <div className="text-center scale-75 ">

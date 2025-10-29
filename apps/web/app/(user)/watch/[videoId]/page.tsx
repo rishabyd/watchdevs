@@ -58,9 +58,12 @@ export default async function VideoPage({ params }: PageProps) {
         <h1 className="text-2xl font-bold">{video.title}</h1>
 
         {video.description && (
-          <p className="text-muted-foreground">{video.description}</p>
+          <p className="text-muted-foreground ">{video.description}</p>
         )}
-
+        {new Date(video.createdAt).toLocaleDateString()}
+        <p className="text-sm text-muted-foreground">
+          {Number(video.viewCount).toLocaleString()} views
+        </p>
         {/* Creator Info */}
         <div className="flex items-center gap-3 pt-4 border-t">
           {video.user.image && (
@@ -74,32 +77,9 @@ export default async function VideoPage({ params }: PageProps) {
             <p className="font-medium">
               {video.user.name || video.user.username}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {Number(video.viewCount).toLocaleString()} views •{" "}
-              {new Date(video.createdAt).toLocaleDateString()}
-            </p>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
-// // Generate metadata for SEO
-// export async function generateMetadata({ params }: PageProps) {
-//   const { videoId } = await params;
-
-//   const video = await prisma.video.findUnique({
-//     where: { id: Number(videoId) },
-//     select: { title: true, description: true },
-//   });
-
-//   if (!video) {
-//     return { title: "Video Not Found" };
-//   }
-
-//   return {
-//     title: video.title,
-//     description: video.description || `Watch ${video.title}`,
-//   };
-// }

@@ -10,7 +10,7 @@ export default function VideoPlayer({
   userId: string;
 }) {
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="w-5xl mx-auto p-6">
       <div className="relative bg-black">
         <MuxPlayer
           playbackId={playbackId}

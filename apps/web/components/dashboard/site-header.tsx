@@ -1,13 +1,22 @@
+"use client";
 import { Button } from "@workspace/ui/components/button";
 import { Separator } from "@workspace/ui/components/separator";
-import { SidebarTrigger } from "@workspace/ui/components/sidebar";
+import { SidebarTrigger, useSidebar } from "@workspace/ui/components/sidebar";
+import { Menu } from "@workspace/ui/icons";
 import Link from "next/link";
 
 export function SiteHeader() {
+  const { toggleSidebar } = useSidebar();
   return (
     <header className="flex  bg-background/50 backdrop-blur-lg items-center gap-2 border-b  w-screen h-14  ease-linear ">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
+        <Button
+          variant={"link"}
+          className="hover:scale-110"
+          onClick={() => toggleSidebar()}
+        >
+          <Menu className="size-5" />
+        </Button>
         <Separator
           orientation="vertical"
           className="mx-2 data-[orientation=vertical]:h-4"

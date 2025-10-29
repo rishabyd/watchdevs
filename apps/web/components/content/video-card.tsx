@@ -2,12 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Card,
-  CardHeader,
   CardTitle,
   CardDescription,
-  CardAction,
   CardContent,
-  CardFooter,
 } from "@workspace/ui/components/card";
 
 interface VideoCardProps {
@@ -54,7 +51,7 @@ export default function VideoCard({
 
   return (
     <Link href={`/watch/${id}`}>
-      <Card className="rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer">
+      <Card className="rounded-none p-3 w-sm bg-accent/80 overflow-hidden hover:bg-accent/50 duration-300 hover:shadow-lg gap-2 shadow-2xl transition-all cursor-pointer focus:scale-200">
         {/* Thumbnail */}
         <div className="relative aspect-video w-full bg-muted">
           <Image
@@ -71,9 +68,11 @@ export default function VideoCard({
           )}
         </div>
 
-        <CardContent className="p-3">
+        <CardContent className=" px-2">
           {/* Title */}
-          <CardTitle className="text-base line-clamp-2 mb-1">{title}</CardTitle>
+          <CardTitle className="text-base font-mono line-clamp-2 mb-1">
+            {title}
+          </CardTitle>
 
           {/* Creator name */}
           {creatorName && (
