@@ -24,11 +24,5 @@
       "@types/react": "19.1.1",
       "@types/react-dom": "19.1.1"
     }
-  },
-  "dependencies": {
-    "next": "15.5.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "zod": "^3.25.76"
   }
 }
