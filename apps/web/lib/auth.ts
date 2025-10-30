@@ -8,10 +8,10 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import DodoPayments from "dodopayments";
 import { prisma } from "@repo/db";
-import {
-  handlePaymentFailed,
-  handlePaymentSucceeded,
-} from "./payments/one-time";
+// import {
+//   handlePaymentFailed,
+//   handlePaymentSucceeded,
+// } from "./payments/one-time";
 
 export const dodoPayments = new DodoPayments({
   bearerToken: process.env.DODO_PAYMENTS_API_KEY!,
@@ -50,10 +50,10 @@ export const auth = betterAuth({
 
             switch (payload.type) {
               case "payment.succeeded":
-                await handlePaymentSucceeded(payload.data);
+                // await handlePaymentSucceeded(payload.data);
                 break;
               case "payment.failed":
-                await handlePaymentFailed(payload.data);
+                // await handlePaymentFailed(payload.data);
                 break;
               default:
                 console.log(`Unhandled webhook event: ${payload.type}`);
