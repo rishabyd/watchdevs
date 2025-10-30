@@ -8,7 +8,7 @@ import Link from "next/link";
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
   return (
-    <header className="flex  bg-background/50 backdrop-blur-lg items-center gap-2 border-b  w-screen h-14  ease-linear ">
+  <header className="flex  bg-background/50 backdrop-blur-lg items-center gap-2   w-screen h-14  ease-linear ">
       <div className="flex w-full items-center gap-1 px-4 lg:gap-2 lg:px-6">
         <Button
           variant={"link"}

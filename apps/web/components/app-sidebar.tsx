@@ -10,7 +10,6 @@ import {
   SidebarFooter,
 } from "@workspace/ui/components/sidebar";
 import { Skeleton } from "@workspace/ui/components/skeleton";
-import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { House, Plug } from "@workspace/ui/icons";
 import { NavUser } from "./nav-user";
 import { usePathname } from "next/navigation";

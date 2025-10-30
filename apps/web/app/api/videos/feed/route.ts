@@ -1,20 +1,21 @@
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@repo/db";
-import { FeedClient } from "@/components/content/feed";
 import { CACHE_KEYS, redis } from "@/lib/cache/redis";
 
-async function getVideoFeed(page = 0, limit = 20) {
+export async function GET(request: NextRequest) {
+  const searchParams = request.nextUrl.searchParams;
+  const page = parseInt(searchParams.get("page") || "0");
+  const limit = 20;
+
   const cacheKey = CACHE_KEYS.videoFeed(page);
 
-  // Try Redis cache first
+  // Check Redis cache
   const cached = await redis.get(cacheKey);
   if (cached) {
-    console.log("Cache hit for page", page);
-    return cached as typeof cleanData;
+    return NextResponse.json(cached);
   }
 
-  console.log("Cache miss - fetching from DB");
-
-  // Cache miss - fetch from database with pagination
+  // Fetch from database
   const data = await prisma.video.findMany({
     where: { visibility: "PUBLIC" },
     orderBy: { createdAt: "desc" },
@@ -45,7 +46,7 @@ async function getVideoFeed(page = 0, limit = 20) {
     title: video.title,
     description: video.description,
     thumbnailKey: video.thumbnailKey,
-    viewCount: Number(video.viewCount),
+    viewCount: video.viewCount,
     duration: video.duration,
     playbackId: video.muxPlaybackId,
     creatorName: video.user.name || video.user.username,
@@ -53,18 +54,8 @@ async function getVideoFeed(page = 0, limit = 20) {
     createdAt: video.createdAt.toISOString(),
   }));
 
-  // Store in Redis with 2 minute TTL
+  // Cache for 2 minutes
   await redis.setex(cacheKey, 120, JSON.stringify(cleanData));
 
-  return cleanData;
-}
-
-export default async function DashboardPage() {
-  const initialData = await getVideoFeed(0, 20);
-
-  return (
-    <div className="p-3 w-full">
-      <FeedClient initialData={initialData} />
-    </div>
-  );
+  return NextResponse.json(cleanData);
 }

@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardContent,
 } from "@workspace/ui/components/card";
+import { formatDistanceToNowStrict } from "date-fns";
 
 interface VideoCardProps {
   id: string;
@@ -51,7 +52,7 @@ export default function VideoCard({
 
   return (
     <Link href={`/watch/${id}`}>
-      <Card className="rounded-none p-3 w-sm bg-accent/80 overflow-hidden hover:bg-accent/50 duration-300 hover:shadow-lg gap-2 shadow-2xl transition-all cursor-pointer focus:scale-200">
+      <Card className="rounded-none p-3   overflow-hidden hover:bg-accent/70 duration-300 hover:shadow-lg gap-2 shadow-2xl transition-all cursor-pointer focus:scale-200">
         {/* Thumbnail */}
         <div className="relative aspect-video w-full bg-muted">
           <Image
@@ -85,7 +86,11 @@ export default function VideoCard({
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
             <span>{formatViews(viewCount)} views</span>
             <span>•</span>
-            <span>{new Date(createdAt).toLocaleDateString()}</span>
+            <span>
+              {formatDistanceToNowStrict(new Date(createdAt), {
+                addSuffix: true,
+              })}
+            </span>
           </div>
         </CardContent>
       </Card>

@@ -1,5 +1,4 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import { DashboardHeader } from "@/components/dashboard/header";
 import { SiteHeader } from "@/components/dashboard/site-header";
 import { auth } from "@/lib/auth";
 import {
@@ -30,7 +29,9 @@ export default async function DashboardLayout({
       </div>
       <SidebarInset>
         <main className="flex-1 pt-14  overflow-y-auto ">
-          <div className="max-w-7xl  mx-auto">{children}</div>
+          <div className=" border-t-2 border-l-2  h-full mx-auto">
+            {children}
+          </div>
         </main>
       </SidebarInset>
     </SidebarProvider>
