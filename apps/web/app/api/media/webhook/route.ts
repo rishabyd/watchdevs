@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         });
         break;
 
-      case 4:
+      case 5:
         console.error(`[Bunny Webhook] Video ${VideoGuid} errored`);
         const video = await prisma.video.findFirst({
           where: { bunnyVideoId: VideoGuid },
