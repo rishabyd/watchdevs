@@ -46,6 +46,7 @@ export default function VideoCard({
   duration,
   viewCount = 0n,
   createdAt,
+  creatorUsername,
 }: VideoCardProps) {
   const thumbnailUrl = thumbnailKey
     ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${thumbnailKey}`

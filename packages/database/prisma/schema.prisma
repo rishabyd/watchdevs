@@ -33,7 +33,11 @@ model User {
   // Optional profile fields
   accountType   AccountType @default(INDIVIDUAL)
 
-  username String @unique
+
+  ProfileUsername String @unique
+  UsernameChangedAt DateTime?
+
+  GithubUsername String @unique
   name          String?
   image         String?
   emailVerified Boolean @default(false)

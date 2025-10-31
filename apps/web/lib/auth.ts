@@ -87,7 +87,7 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      username: {
+      GithubUsername: {
         type: "string",
         required: true,
       },
@@ -110,7 +110,7 @@ export const auth = betterAuth({
           name: profile.name || profile.login,
           image: profile.avatar_url,
           emailVerified: !!profile.email,
-          username: profile.login,
+          GithubUsername: profile.login,
         };
       },
     },

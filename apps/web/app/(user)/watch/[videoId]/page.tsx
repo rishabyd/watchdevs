@@ -1,5 +1,6 @@
 import VideoPlayer from "@/components/content/video-player";
 import { prisma } from "@repo/db";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 type PageProps = {
@@ -24,7 +25,8 @@ export default async function VideoPage({ params }: PageProps) {
         select: {
           id: true,
           name: true,
-          username: true,
+          ProfileUsername: true,
+          GithubUsername: true,
           image: true,
         },
       },
@@ -45,7 +47,7 @@ export default async function VideoPage({ params }: PageProps) {
     .catch(() => {});
 
   return (
-    <div className="flex flex-1 mt-9 flex-col max-w-7xl mx-auto p-6 gap-6">
+    <div className="flex flex-1 mt-14 flex-col justify-center   ">
       {/* Video Player */}
       <VideoPlayer
         bunnyVideoId={video.bunnyVideoId}
@@ -55,9 +57,28 @@ export default async function VideoPage({ params }: PageProps) {
       />
 
       {/* Video Info */}
-      <div className="space-y-4">
+      <div className="space-y-4 mt-3 px-16 ">
         <h1 className="text-2xl font-bold">{video.title}</h1>
-
+        <div className="flex items-center  border gap-3 p-2 ">
+          {video.user.image && (
+            <img
+              src={video.user.image}
+              alt={video.user.name || ""}
+              className="w-10 h-10 "
+            />
+          )}
+          <div className=" flex-col  gap-0">
+            <p className="font-medium h-5 text-lg p-0">{video.user.name}</p>
+            <Link
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-0 hover:text-blue-400 text-sm text-foreground/50 duration-300"
+              href={`https://github.com/${video.user.GithubUsername}`}
+            >
+              {video.user.GithubUsername}
+            </Link>
+          </div>
+        </div>
         {video.description && (
           <p className="text-muted-foreground">{video.description}</p>
         )}
@@ -69,20 +90,6 @@ export default async function VideoPage({ params }: PageProps) {
         </p>
 
         {/* Creator Info */}
-        <div className="flex items-center gap-3 pt-4 border-t">
-          {video.user.image && (
-            <img
-              src={video.user.image}
-              alt={video.user.name || video.user.username}
-              className="w-10 h-10 rounded-full"
-            />
-          )}
-          <div>
-            <p className="font-medium">
-              {video.user.name || video.user.username}
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );

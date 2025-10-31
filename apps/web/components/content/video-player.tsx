@@ -14,10 +14,10 @@ export default function VideoPlayer({
   const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${bunnyVideoId}`;
 
   return (
-    <div className="w-5xl mx-auto p-6">
+    <div className="w-full bg-black">
       <div
-        className="relative bg-background  overflow-hidden"
-        style={{ aspectRatio: "16 / 9" }}
+        className="relative overflow-hidden bg-black"
+        style={{ height: "67vh" }}
       >
         <iframe
           id="bunny-stream-player"
