@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
   // Fetch from database
   const data = await prisma.video.findMany({
-    where: { visibility: "PUBLIC" },
+    where: { visibility: "PUBLIC", status: "READY" },
     orderBy: { createdAt: "desc" },
     skip: page * limit,
     take: limit,

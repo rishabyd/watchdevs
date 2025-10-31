@@ -18,7 +18,6 @@ export default async function VideoPage({ params }: PageProps) {
       description: true,
       bunnyVideoId: true,
       bunnyLibraryId: true,
-      duration: true,
       viewCount: true,
       createdAt: true,
       user: {
@@ -43,14 +42,14 @@ export default async function VideoPage({ params }: PageProps) {
       where: { id: videoId },
       data: { viewCount: { increment: 1 } },
     })
-    .catch(() => {}); // Don't block render if this fails
+    .catch(() => {});
 
   return (
     <div className="flex flex-1 mt-9 flex-col max-w-7xl mx-auto p-6 gap-6">
       {/* Video Player */}
       <VideoPlayer
         bunnyVideoId={video.bunnyVideoId}
-        bunnyLibraryId={video.bunnyLibraryId}
+        bunnyLibraryId={video.bunnyLibraryId!}
         title={video.title}
         userId={video.user.id}
       />

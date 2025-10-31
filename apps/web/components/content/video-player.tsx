@@ -16,7 +16,7 @@ export default function VideoPlayer({
   return (
     <div className="w-5xl mx-auto p-6">
       <div
-        className="relative bg-black rounded-none overflow-hidden"
+        className="relative bg-background  overflow-hidden"
         style={{ aspectRatio: "16 / 9" }}
       >
         <iframe

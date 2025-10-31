@@ -65,7 +65,7 @@ export default async function DashboardPage() {
   const initialData = await getVideoFeed(0, 20);
 
   return (
-    <div className="p-3 w-full">
+    <div className="p-3 mt-14 scroll-smooth w-full">
       <FeedClient initialData={initialData} />
     </div>
   );

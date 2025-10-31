@@ -28,10 +28,8 @@ export default async function DashboardLayout({
         <SiteHeader />
       </div>
       <SidebarInset>
-        <main className="flex-1 pt-14  overflow-y-auto ">
-          <div className=" border-t-2 border-l-2  h-full mx-auto">
-            {children}
-          </div>
+        <main>
+          <div className=" !bg-accent/40  h-full mx-auto">{children}</div>
         </main>
       </SidebarInset>
     </SidebarProvider>

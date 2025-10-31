@@ -248,7 +248,7 @@ export default function StudioUpload() {
         upload.findPreviousUploads().then((prev) => {
           if (prev.length) {
             console.log("Resuming previous upload");
-            upload.resumeFromPreviousUpload(prev[0]);
+            upload.resumeFromPreviousUpload(prev[0]!);
           }
           upload.start();
         });
@@ -272,7 +272,7 @@ export default function StudioUpload() {
   // Render file selection step
   if (step === "select") {
     return (
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mt-14 mx-auto p-6">
         <h1 className="text-3xl font-bold mb-2">Upload Video</h1>
         <p className="text-muted-foreground mb-8">
           Share your content with the dev community
