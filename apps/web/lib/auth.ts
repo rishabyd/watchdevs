@@ -8,6 +8,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import DodoPayments from "dodopayments";
 import { prisma } from "@repo/db";
+import { generateRandomUsername } from "@/utils/username";
 // import {
 //   handlePaymentFailed,
 //   handlePaymentSucceeded,
@@ -75,11 +76,21 @@ export const auth = betterAuth({
           }
 
           try {
-            // await prisma.wallet.create({
-            //   data: { userId: user.id }
-            // });
+            // Generate random profileUsername
+            const profileUsername = await generateRandomUsername();
+
+            // Update user with profileUsername and displayName
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                ProfileUsername: profileUsername,
+              },
+            });
+
+            console.log(`Username set to: ${profileUsername}`);
           } catch (error) {
-            console.error("Failed to create resources for new user:", error);
+            console.error("Failed to setup new user:", error);
+            throw error;
           }
         },
       },
@@ -87,6 +98,10 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
+      profileUsername: {
+        type: "string",
+        required: false, // Set by hook, not at signup
+      },
       GithubUsername: {
         type: "string",
         required: true,

@@ -34,7 +34,7 @@ model User {
   accountType   AccountType @default(INDIVIDUAL)
 
 
-  ProfileUsername String @unique
+  ProfileUsername String? @unique
   UsernameChangedAt DateTime?
 
   GithubUsername String @unique
