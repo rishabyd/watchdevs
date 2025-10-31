@@ -117,11 +117,9 @@ model Video {
   id            String             @id @default(cuid())
   userId        String
   user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  muxUploadId   String?
-  muxAssetId    String?            @unique
-  muxPlaybackId String?
 
-  bunnyVideoId String?
+
+  bunnyVideoId String? @unique
   bunnyLibraryId String?
 
   title         String
