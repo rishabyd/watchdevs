@@ -125,7 +125,7 @@ export const auth = betterAuth({
           name: profile.name || profile.login,
           image: profile.avatar_url,
           emailVerified: !!profile.email,
-          GithubUsername: profile.login,
+          githubUsername: profile.login,
         };
       },
     },
