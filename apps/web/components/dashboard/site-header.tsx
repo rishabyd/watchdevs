@@ -3,6 +3,7 @@ import { Button } from "@workspace/ui/components/button";
 import { useSidebar } from "@workspace/ui/components/sidebar";
 import { Menu } from "@workspace/ui/icons";
 import Link from "next/link";
+import SearchBar from "../search/search-bar";
 
 export function SiteHeader() {
   const { toggleSidebar } = useSidebar();
@@ -20,7 +21,9 @@ export function SiteHeader() {
         <Link className="h-full flex items-center" href={`/`}>
           <h1 className="font-sans text-xl font-medium">WatchDevs</h1>
         </Link>
-
+        <div className="mx-auto">
+          <SearchBar />
+        </div>
         <div className="ml-auto flex items-center gap-2">
           <Button variant="ghost" asChild size="sm" className="hidden sm:flex">
             <Link href={`/studio`}>Upload video</Link>
