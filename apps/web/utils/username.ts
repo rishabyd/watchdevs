@@ -82,7 +82,7 @@ export async function generateRandomUsername(): Promise<string> {
 
     // Check if username already exists
     const existing = await prisma.user.findUnique({
-      where: { ProfileUsername: username },
+      where: { profileUsername: username },
     });
 
     if (!existing) {
