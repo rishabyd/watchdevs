@@ -1,35 +1,39 @@
-import MuxPlayer from "@mux/mux-player-react";
+"use client";
 
 export default function VideoPlayer({
-  playbackId,
+  bunnyVideoId,
+  bunnyLibraryId,
   title,
   userId,
 }: {
-  playbackId: string;
+  bunnyVideoId: string;
+  bunnyLibraryId: string;
   title: string;
   userId: string;
 }) {
+  const embedUrl = `https://iframe.mediadelivery.net/embed/${bunnyLibraryId}/${bunnyVideoId}`;
+
   return (
     <div className="w-5xl mx-auto p-6">
-      <div className="relative bg-black">
-        <MuxPlayer
-          playbackId={playbackId}
-          metadata={{
-            video_title: title,
-            viewer_user_id: userId,
+      <div
+        className="relative bg-black rounded-none overflow-hidden"
+        style={{ aspectRatio: "16 / 9" }}
+      >
+        <iframe
+          id="bunny-stream-player"
+          src={embedUrl}
+          loading="lazy"
+          style={{
+            border: "none",
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
           }}
-          streamType="on-demand"
-          // Styling
-          accentColor="#000000"
-          primaryColor="#FFFFFF"
-          // secondaryColor="#71717A"
-          // Player controls
-          autoPlay={true}
-          muted={false}
-          loop={false}
-          // UI features
-          thumbnailTime={0}
-          preload="auto"
+          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen={true}
+          title={title}
         />
       </div>
     </div>

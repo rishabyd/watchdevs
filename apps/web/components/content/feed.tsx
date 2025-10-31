@@ -29,14 +29,13 @@ export function FeedClient({ initialData }: { initialData: any[] }) {
     threshold: 0.5,
   });
 
-  // Track if we're already loading to prevent duplicate requests
   const isLoadingMore = isLoading || isValidating;
 
   useEffect(() => {
     if (inView && !isLoadingMore) {
-      setSize((prevSize) => prevSize + 1); // Use functional update
+      setSize((prevSize) => prevSize + 1);
     }
-  }, [inView, isLoadingMore, setSize]); // Remove 'size' from dependencies
+  }, [inView, isLoadingMore, setSize]);
 
   const videos = data ? data.flat() : [];
   const isEmpty = videos.length === 0;
@@ -56,7 +55,8 @@ export function FeedClient({ initialData }: { initialData: any[] }) {
             description={video.description}
             creatorId={video.creatorId}
             creatorName={video.creatorName}
-            playbackId={video.playbackId}
+            bunnyVideoId={video.bunnyVideoId}
+            bunnyLibraryId={video.bunnyLibraryId}
             userId={video.creatorId}
             duration={video.duration}
             viewCount={video.viewCount}

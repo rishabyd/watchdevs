@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import imageCompression from "browser-image-compression"; // ADD THIS
+import imageCompression from "browser-image-compression";
+import * as tus from "tus-js-client";
 import {
   Select,
   SelectTrigger,
@@ -65,11 +66,9 @@ export default function StudioUpload() {
     "select",
   );
 
-  // File state
   const [file, setFile] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
 
-  // Metadata state
   const [metadata, setMetadata] = useState<VideoMetadata>({
     title: "",
     description: "",
@@ -78,26 +77,20 @@ export default function StudioUpload() {
     visibility: "public",
   });
 
-  // Tag input state
   const [tagInput, setTagInput] = useState("");
-
-  // Upload state
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // Handle video file selection
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      // Validate file type
       if (!selectedFile.type.startsWith("video/")) {
         setError("Please select a valid video file");
         return;
       }
 
-      // Validate file size (max 5GB)
-      const MAX_SIZE = 5 * 1024 * 1024 * 1024; // 5GB
+      const MAX_SIZE = 5 * 1024 * 1024 * 1024;
       if (selectedFile.size > MAX_SIZE) {
         setError("Video too large. Maximum size is 5GB");
         return;
@@ -111,7 +104,6 @@ export default function StudioUpload() {
     }
   };
 
-  // Handle custom thumbnail upload
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) {
@@ -119,8 +111,7 @@ export default function StudioUpload() {
       return;
     }
 
-    // Validate thumbnail size (before compression)
-    const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+    const MAX_SIZE = 10 * 1024 * 1024;
     if (file.size > MAX_SIZE) {
       setError("Thumbnail too large. Maximum size is 10MB");
       return;
@@ -128,7 +119,6 @@ export default function StudioUpload() {
 
     setMetadata((prev) => ({ ...prev, thumbnail: file }));
 
-    // Show preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setThumbnailPreview(reader.result as string);
@@ -137,7 +127,6 @@ export default function StudioUpload() {
     setError(null);
   };
 
-  // Handle tag addition
   const addTag = () => {
     const trimmedTag = tagInput.trim().toLowerCase();
     if (
@@ -153,7 +142,6 @@ export default function StudioUpload() {
     }
   };
 
-  // Remove tag
   const removeTag = (tagToRemove: string) => {
     setMetadata((prev) => ({
       ...prev,
@@ -161,18 +149,16 @@ export default function StudioUpload() {
     }));
   };
 
-  // Validate metadata before upload
   const canUpload = () => {
     return (
       metadata.title.trim().length >= 3 &&
       metadata.description.trim().length >= 10 &&
       metadata.category &&
-      metadata.thumbnail && // Require thumbnail
+      metadata.thumbnail &&
       file
     );
   };
 
-  // Upload to R2 + Mux
   const uploadVideo = async () => {
     if (!file || !metadata.thumbnail || !canUpload()) return;
 
@@ -182,10 +168,10 @@ export default function StudioUpload() {
     setError(null);
 
     try {
-      // Step 1: Compress thumbnail (client-side, saves bandwidth)
+      // Step 1: Compress thumbnail
       setProgress(5);
       const compressedThumbnail = await imageCompression(metadata.thumbnail, {
-        maxSizeMB: 0.2, // Target 200KB
+        maxSizeMB: 0.2,
         maxWidthOrHeight: 1280,
         useWebWorker: true,
         fileType: "image/webp",
@@ -196,7 +182,7 @@ export default function StudioUpload() {
         `Thumbnail: ${(metadata.thumbnail.size / 1024).toFixed(0)}KB → ${(compressedThumbnail.size / 1024).toFixed(0)}KB`,
       );
 
-      // Step 2: Submit metadata and get upload URLs
+      // Step 2: Create video + get presigned upload URLs
       setProgress(10);
       const createResponse = await fetch("/api/media/upload-url", {
         method: "POST",
@@ -218,7 +204,12 @@ export default function StudioUpload() {
         throw new Error(error.error || "Failed to create video");
       }
 
-      const { videoId, uploadUrls } = await createResponse.json();
+      const response = await createResponse.json();
+      const { videoId, uploadUrls, bunny } = response;
+
+      if (!bunny || !bunny.tus) {
+        throw new Error("Invalid upload configuration from server");
+      }
 
       // Step 3: Upload thumbnail to R2 (fast, small file)
       setProgress(15);
@@ -230,38 +221,37 @@ export default function StudioUpload() {
         if (!res.ok) throw new Error("Thumbnail upload failed");
       });
 
-      // Step 4: Upload video to Mux (with progress tracking)
+      // Step 4: Upload video to Bunny via TUS (direct, resumable)
       setProgress(20);
       const videoUploadPromise = new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-
-        xhr.upload.addEventListener("progress", (e) => {
-          if (e.lengthComputable) {
-            const percentComplete = (e.loaded / e.total) * 100;
-            // Map to 20-95% range (leave 5% for processing)
-            setProgress(20 + Math.round(percentComplete * 0.75));
-          }
-        });
-
-        xhr.addEventListener("load", () => {
-          if (xhr.status === 200 || xhr.status === 201) {
+        const upload = new tus.Upload(file, {
+          endpoint: bunny.tus.endpoint,
+          headers: bunny.tus.headers,
+          uploadSize: file.size,
+          retryDelays: [0, 3000, 5000, 10000, 20000],
+          onError: (err: Error) => {
+            console.error("TUS upload error:", err);
+            reject(err);
+          },
+          onProgress: (bytesSent: number, bytesTotal: number) => {
+            const pct = (bytesSent / bytesTotal) * 100;
+            // Map to 20–95% range
+            setProgress(20 + Math.round(pct * 0.75));
+          },
+          onSuccess: () => {
+            console.log("Video uploaded to Bunny successfully");
             resolve();
-          } else {
-            reject(new Error("Video upload failed"));
+          },
+        });
+
+        // Resume from previous upload if available
+        upload.findPreviousUploads().then((prev) => {
+          if (prev.length) {
+            console.log("Resuming previous upload");
+            upload.resumeFromPreviousUpload(prev[0]);
           }
+          upload.start();
         });
-
-        xhr.addEventListener("error", () => {
-          reject(new Error("Network error during video upload"));
-        });
-
-        xhr.addEventListener("abort", () => {
-          reject(new Error("Video upload cancelled"));
-        });
-
-        xhr.open("PUT", uploadUrls.video);
-        xhr.setRequestHeader("Content-Type", file.type);
-        xhr.send(file);
       });
 
       // Wait for both uploads to complete
@@ -289,7 +279,7 @@ export default function StudioUpload() {
         </p>
 
         <Card className="border-2 duration-500 border-dashed hover:border-primary transition-colors cursor-pointer rounded-none">
-          <CardContent className="p-12 ">
+          <CardContent className="p-12">
             <input
               type="file"
               accept="video/*"
@@ -458,12 +448,12 @@ export default function StudioUpload() {
                   Add
                 </Button>
               </div>
-              <div className="flex flex-wrap  gap-2">
+              <div className="flex flex-wrap gap-2">
                 {metadata.tags.map((tag) => (
-                  <Badge key={tag} className="p-0  rounded-none">
+                  <Badge key={tag} className="p-0 rounded-none">
                     <Button
                       onClick={() => removeTag(tag)}
-                      className="hover:text-destructive  border-none bg-transparent rounded-none  cursor-pointer"
+                      className="hover:text-destructive border-none bg-transparent rounded-none cursor-pointer"
                     >
                       {tag}
                       <X />
@@ -474,10 +464,9 @@ export default function StudioUpload() {
             </div>
 
             {/* Visibility */}
-            <div className=" ">
+            <div>
               <Label>Visibility</Label>
               <RadioGroup
-                className=""
                 value={metadata.visibility}
                 onValueChange={(value) =>
                   setMetadata({

@@ -121,6 +121,9 @@ model Video {
   muxAssetId    String?            @unique
   muxPlaybackId String?
 
+  bunnyVideoId String?
+  bunnyLibraryId String?
+
   title         String
   description   String?
   thumbnailKey  String?

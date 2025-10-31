@@ -16,11 +16,12 @@ interface VideoCardProps {
   creatorId: string;
   creatorUsername: string;
   creatorName?: string;
-  playbackId: string | null;
+  bunnyVideoId: string;
+  bunnyLibraryId: string;
   userId: string;
   duration?: number | null;
   viewCount?: bigint;
-  createdAt: Date;
+  createdAt: string; // ISO string from server
 }
 
 function formatDuration(seconds: number): string {
@@ -52,7 +53,7 @@ export default function VideoCard({
 
   return (
     <Link href={`/watch/${id}`}>
-      <Card className="rounded-none p-3   overflow-hidden hover:bg-accent/70 duration-300 hover:shadow-lg gap-2 shadow-2xl transition-all cursor-pointer focus:scale-200">
+      <Card className="rounded-none p-3 overflow-hidden hover:bg-accent/70 duration-300 hover:shadow-lg gap-2 shadow-2xl transition-all cursor-pointer focus:scale-200">
         {/* Thumbnail */}
         <div className="relative aspect-video w-full bg-muted">
           <Image
@@ -69,7 +70,7 @@ export default function VideoCard({
           )}
         </div>
 
-        <CardContent className=" px-2">
+        <CardContent className="px-2">
           {/* Title */}
           <CardTitle className="text-base font-mono line-clamp-2 mb-1">
             {title}

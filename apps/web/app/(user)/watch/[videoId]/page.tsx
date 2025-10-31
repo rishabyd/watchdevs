@@ -16,7 +16,8 @@ export default async function VideoPage({ params }: PageProps) {
       id: true,
       title: true,
       description: true,
-      muxPlaybackId: true,
+      bunnyVideoId: true,
+      bunnyLibraryId: true,
       duration: true,
       viewCount: true,
       createdAt: true,
@@ -32,7 +33,7 @@ export default async function VideoPage({ params }: PageProps) {
   });
 
   // If video doesn't exist, show 404
-  if (!video || !video.muxPlaybackId) {
+  if (!video || !video.bunnyVideoId) {
     notFound();
   }
 
@@ -48,7 +49,8 @@ export default async function VideoPage({ params }: PageProps) {
     <div className="flex flex-1 mt-9 flex-col max-w-7xl mx-auto p-6 gap-6">
       {/* Video Player */}
       <VideoPlayer
-        playbackId={video.muxPlaybackId}
+        bunnyVideoId={video.bunnyVideoId}
+        bunnyLibraryId={video.bunnyLibraryId}
         title={video.title}
         userId={video.user.id}
       />
@@ -58,12 +60,15 @@ export default async function VideoPage({ params }: PageProps) {
         <h1 className="text-2xl font-bold">{video.title}</h1>
 
         {video.description && (
-          <p className="text-muted-foreground ">{video.description}</p>
+          <p className="text-muted-foreground">{video.description}</p>
         )}
-        {new Date(video.createdAt).toLocaleDateString()}
+        <p className="text-sm text-muted-foreground">
+          {new Date(video.createdAt).toLocaleDateString()}
+        </p>
         <p className="text-sm text-muted-foreground">
           {Number(video.viewCount).toLocaleString()} views
         </p>
+
         {/* Creator Info */}
         <div className="flex items-center gap-3 pt-4 border-t">
           {video.user.image && (
