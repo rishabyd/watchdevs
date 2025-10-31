@@ -1,4 +1,3 @@
-// app/api/media/upload-url/route.ts
 import { auth } from "@/lib/auth";
 import { prisma } from "@repo/db";
 import { NextResponse } from "next/server";

@@ -83,7 +83,7 @@ export const auth = betterAuth({
             await prisma.user.update({
               where: { id: user.id },
               data: {
-                ProfileUsername: profileUsername,
+                profileUsername: profileUsername,
               },
             });
 
@@ -102,7 +102,7 @@ export const auth = betterAuth({
         type: "string",
         required: false, // Set by hook, not at signup
       },
-      GithubUsername: {
+      githubUsername: {
         type: "string",
         required: true,
       },

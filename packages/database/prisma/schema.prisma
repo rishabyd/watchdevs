@@ -34,10 +34,10 @@ model User {
   accountType   AccountType @default(INDIVIDUAL)
 
 
-  ProfileUsername String? @unique
-  UsernameChangedAt DateTime?
+  profileUsername String? @unique
+  usernameChangedAt DateTime?
 
-  GithubUsername String @unique
+  githubUsername String @unique
   name          String?
   image         String?
   emailVerified Boolean @default(false)

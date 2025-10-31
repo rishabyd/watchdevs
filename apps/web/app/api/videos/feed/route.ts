@@ -34,8 +34,8 @@ export async function GET(request: NextRequest) {
       createdAt: true,
       user: {
         select: {
-          GithubUsername: true,
-          ProfileUsername: true,
+          githubUsername: true,
+          profileUsername: true,
           name: true,
         },
       },
@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
     bunnyVideoId: video.bunnyVideoId,
     bunnyLibraryId: video.bunnyLibraryId,
     creatorName: video.user.name,
-    creatorUsername: video.user.ProfileUsername,
-    creatorGithubUsername: video.user.GithubUsername,
+    creatorUsername: video.user.profileUsername,
+    creatorGithubUsername: video.user.githubUsername,
     createdAt: video.createdAt.toISOString(),
   }));
 
