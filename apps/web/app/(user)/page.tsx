@@ -16,7 +16,7 @@ async function getVideoFeed(page = 0, limit = 20) {
 
   // Cache miss - fetch from database with pagination
   const data = await prisma.video.findMany({
-    where: { visibility: "PUBLIC" },
+    where: { visibility: "PUBLIC", status: "READY" },
     orderBy: { createdAt: "desc" },
     skip: page * limit,
     take: limit,

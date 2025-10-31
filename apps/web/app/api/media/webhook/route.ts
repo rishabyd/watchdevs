@@ -9,42 +9,42 @@ export async function POST(request: NextRequest) {
 
     console.log("[Bunny Webhook] Payload:", JSON.stringify(body, null, 2));
 
-    const { VideoId, Status } = body;
+    const { VideoGuid, Status } = body;
 
-    if (!VideoId || Status === undefined) {
-      console.error("[Bunny Webhook] Missing VideoId or Status");
+    if (!VideoGuid || Status === undefined) {
+      console.error("[Bunny Webhook] Missing VideoGuid or Status");
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
-    console.log(`[Bunny Webhook] Video: ${VideoId}, Status: ${Status}`);
+    console.log(`[Bunny Webhook] Video: ${VideoGuid}, Status: ${Status}`);
 
     // Bunny status codes: 1=uploading, 2=transcoding, 3=ready, 4=error
     switch (Status) {
       case 1:
-        console.log(`[Bunny Webhook] Video ${VideoId} uploading`);
+        console.log(`[Bunny Webhook] Video ${VideoGuid} uploading`);
 
         break;
 
       case 2:
-        console.log(`[Bunny Webhook] Video ${VideoId} transcoding`);
+        console.log(`[Bunny Webhook] Video ${VideoGuid} transcoding`);
         await prisma.video.updateMany({
-          where: { bunnyVideoId: VideoId },
+          where: { bunnyVideoId: VideoGuid },
           data: { status: "PROCESSING" },
         });
         break;
 
       case 3:
-        console.log(`[Bunny Webhook] Video ${VideoId} ready`);
+        console.log(`[Bunny Webhook] Video ${VideoGuid} ready`);
         await prisma.video.updateMany({
-          where: { bunnyVideoId: VideoId },
+          where: { bunnyVideoId: VideoGuid },
           data: { status: "READY" },
         });
         break;
 
       case 4:
-        console.error(`[Bunny Webhook] Video ${VideoId} errored`);
+        console.error(`[Bunny Webhook] Video ${VideoGuid} errored`);
         const video = await prisma.video.findFirst({
-          where: { bunnyVideoId: VideoId },
+          where: { bunnyVideoId: VideoGuid },
         });
         if (video) {
           await prisma.video.delete({ where: { id: video.id } });

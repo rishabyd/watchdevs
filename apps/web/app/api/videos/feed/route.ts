@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
       thumbnailKey: true,
       viewCount: true,
       duration: true,
-      muxPlaybackId: true,
+      bunnyLibraryId: true,
+      bunnyVideoId: true,
       createdAt: true,
       user: {
         select: {
@@ -48,7 +49,8 @@ export async function GET(request: NextRequest) {
     thumbnailKey: video.thumbnailKey,
     viewCount: video.viewCount,
     duration: video.duration,
-    playbackId: video.muxPlaybackId,
+    bunnyVideoId: video.bunnyVideoId,
+    bunnyLibraryId: video.bunnyLibraryId,
     creatorName: video.user.name || video.user.username,
     creatorUsername: video.user.username,
     createdAt: video.createdAt.toISOString(),

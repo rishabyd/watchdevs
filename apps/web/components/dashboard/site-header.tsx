@@ -1,6 +1,5 @@
 "use client";
 import { Button } from "@workspace/ui/components/button";
-import { Separator } from "@workspace/ui/components/separator";
 import { useSidebar } from "@workspace/ui/components/sidebar";
 import { Menu } from "@workspace/ui/icons";
 import Link from "next/link";
