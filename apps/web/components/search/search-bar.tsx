@@ -72,8 +72,12 @@ export default function SearchBar() {
               onClick={handleResultClick}
               className="px-4 py-2 flex hover:bg-accent/50 duration-300 border-b last:border-b-0"
             >
-              <div className="font-semibold truncate">{video.title} by </div>
-              <div className="text-sm text-gray-600">{video.user.name}</div>
+              <div className="font-semibold flex-5/6 truncate">
+                {video.title}{" "}
+              </div>
+              <div className="text-sm text-foreground/50 flex-1/6 ml-auto">
+                {video.user.name}
+              </div>
             </Link>
           ))}
         </div>
