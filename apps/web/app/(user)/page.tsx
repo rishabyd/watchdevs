@@ -1,20 +1,7 @@
 import { prisma } from "@repo/db";
 import { FeedClient } from "@/components/content/feed";
-import { CACHE_KEYS, redis } from "@/lib/cache/redis";
 
 async function getVideoFeed(page = 0, limit = 20) {
-  const cacheKey = CACHE_KEYS.videoFeed(page);
-
-  // Try Redis cache first
-  const cached = await redis.get(cacheKey);
-  if (cached) {
-    console.log("Cache hit for page", page);
-    return cached as typeof cleanData;
-  }
-
-  console.log("Cache miss - fetching from DB");
-
-  // Cache miss - fetch from database with pagination
   const data = await prisma.video.findMany({
     where: { visibility: "PUBLIC", status: "READY" },
     orderBy: { createdAt: "desc" },
@@ -58,7 +45,6 @@ async function getVideoFeed(page = 0, limit = 20) {
   }));
 
   // Store in Redis with 2 minute TTL
-  await redis.setex(cacheKey, 120, JSON.stringify(cleanData));
 
   return cleanData;
 }
