@@ -362,7 +362,7 @@ export default function VideoPlayer({
                   <DropdownMenuContent
                     align="end"
                     side="top"
-                    className="w-40 bg-background/50 backdrop-blur-lg z-[9999] fixed"
+                    className="w-40 bg-background/50 backdrop-blur-lg "
                   >
                     <DropdownMenuLabel className="text-xs uppercase tracking-wide">
                       Quality
@@ -410,7 +410,7 @@ export default function VideoPlayer({
                 <DropdownMenuContent
                   align="end"
                   side="top"
-                  className="w-40 bg-background/50 backdrop-blur-lg z-[9999] fixed" // ← Add z-[9999] fixed
+                  className="w-40 bg-background/50 backdrop-blur-lg "
                 >
                   <DropdownMenuLabel className="text-xs uppercase tracking-wide">
                     Speed
