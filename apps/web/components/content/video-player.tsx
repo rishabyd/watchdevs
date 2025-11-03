@@ -199,7 +199,7 @@ export default function VideoPlayer({
     <div className="w-full bg-background">
       <div
         ref={containerRef}
-        className="relative overflow-hidden bg-black rounded-lg shadow-lg border border-border"
+        className="relative overflow-hidden bg-black  shadow-lg border border-border"
         style={{ height }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => isPlaying && setShowControls(false)}
@@ -299,6 +299,11 @@ export default function VideoPlayer({
                 )}
               </Button>
 
+              {/* Time Display */}
+              <span className="text-sm font-mono text-  foreground ml-4">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+
               {/* Volume Control */}
               <div className="flex items-center gap-2 group/volume ml-2">
                 <Button
@@ -309,7 +314,6 @@ export default function VideoPlayer({
                       videoRef.current.muted = !isMuted;
                     }
                   }}
-                  className="hover:bg-primary/20"
                 >
                   {isMuted || volume === 0 ? (
                     <VolumeX className="size-5 text-white" />
@@ -337,18 +341,13 @@ export default function VideoPlayer({
                       }
                     }
                   }}
-                  className="w-20 h-1 opacity-0 group-hover/volume:opacity-100 transition-opacity cursor-pointer"
+                  className="w-20 h-1 opacity-0 group-hover/volume:opacity-100 transition-opacity duration-300 cursor-pointer"
                 />
               </div>
-
-              {/* Time Display */}
-              <span className="text-xs font-mono text-muted-foreground ml-4">
-                {formatTime(currentTime)} / {formatTime(duration)}
-              </span>
             </div>
 
             <div className="flex items-center gap-1">
-              {/* Quality Menu - SEPARATE */}
+              {/* Quality Menu */}
               {qualities.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -360,9 +359,13 @@ export default function VideoPlayer({
                       <Settings className="size-5 text-white" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" side="top" className="w-40">
+                  <DropdownMenuContent
+                    align="end"
+                    side="top"
+                    className="w-40 bg-background/50 backdrop-blur-lg z-[9999] fixed"
+                  >
                     <DropdownMenuLabel className="text-xs uppercase tracking-wide">
-                      Video Quality
+                      Quality
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
@@ -373,9 +376,6 @@ export default function VideoPlayer({
                       )}
                     >
                       <span className="flex-1">Auto</span>
-                      {selectedQuality === -1 && (
-                        <span className="text-xs">✓</span>
-                      )}
                     </DropdownMenuItem>
                     {qualities.map((q, idx) => (
                       <DropdownMenuItem
@@ -396,7 +396,7 @@ export default function VideoPlayer({
                 </DropdownMenu>
               )}
 
-              {/* Speed Menu - SEPARATE */}
+              {/* Speed Menu */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -404,12 +404,16 @@ export default function VideoPlayer({
                     variant="ghost"
                     className="hover:bg-primary/20"
                   >
-                    <Gauge className="size-5 text-white" />
+                    <Zap className="size-5 text-white" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuContent
+                  align="end"
+                  side="top"
+                  className="w-40 bg-background/50 backdrop-blur-lg z-[9999] fixed" // ← Add z-[9999] fixed
+                >
                   <DropdownMenuLabel className="text-xs uppercase tracking-wide">
-                    Playback Speed
+                    Speed
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
