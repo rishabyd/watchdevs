@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@workspace/ui/components/button";
+import { Slider } from "@workspace/ui/components/slider";
 import {
   Check,
   Expand,
@@ -41,6 +42,7 @@ export default function VideoPlayer({
   const hlsRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const previousVolumeRef = useRef(1);
   const timeoutRef = useRef<{
     controls?: NodeJS.Timeout;
     mouseMove?: NodeJS.Timeout;
@@ -243,6 +245,22 @@ export default function VideoPlayer({
     setIsSpeedOpen(false);
   };
 
+  const handleMuteToggle = () => {
+    if (videoRef.current) {
+      if (!isMuted) {
+        // Muting: save current volume and set to 0
+        previousVolumeRef.current = volume;
+        videoRef.current.volume = 0;
+        setVolume(0);
+      } else {
+        // Unmuting: restore previous volume
+        videoRef.current.volume = previousVolumeRef.current;
+        setVolume(previousVolumeRef.current);
+      }
+      videoRef.current.muted = !isMuted;
+    }
+  };
+
   return (
     <div className="w-full bg-background">
       <div
@@ -329,9 +347,9 @@ export default function VideoPlayer({
                 }
               }}
             >
-              <div className="relative h-1.5 bg-secondary rounded-full overflow-hidden group-hover/progress:h-2 transition-all">
+              <div className="relative h-1.5 bg-secondary  overflow-hidden group-hover/progress:h-2 transition-all">
                 <div
-                  className="h-full bg-primary rounded-full transition-all"
+                  className="h-full bg-primary  transition-all"
                   style={{ width: `${(currentTime / duration) * 100}%` }}
                 />
               </div>
@@ -368,11 +386,7 @@ export default function VideoPlayer({
                 <Button
                   size="icon"
                   variant="ghost"
-                  onClick={() => {
-                    if (videoRef.current) {
-                      videoRef.current.muted = !isMuted;
-                    }
-                  }}
+                  onClick={handleMuteToggle}
                   className="hover:bg-primary/20 size-11"
                 >
                   {isMuted || volume === 0 ? (
@@ -384,16 +398,13 @@ export default function VideoPlayer({
                   )}
                 </Button>
 
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.1"
-                  value={volume}
-                  onChange={(e) => {
-                    const vol = parseFloat(e.target.value);
+                <Slider
+                  value={[volume]}
+                  onValueChange={(val) => {
+                    const vol = val[0];
                     if (videoRef.current) {
-                      videoRef.current.volume = vol;
+                      videoRef.current.volume = vol ?? 0;
+                      setVolume(vol ?? 0);
                       if (vol === 0) {
                         videoRef.current.muted = true;
                       } else if (videoRef.current.muted) {
@@ -401,7 +412,10 @@ export default function VideoPlayer({
                       }
                     }
                   }}
-                  className="w-20 h-1 opacity-0 group-hover/volume:opacity-100 transition-opacity duration-300 cursor-pointer"
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  className="w-20 cursor-pointer opacity-0 group-hover/volume:opacity-100 transition-opacity duration-300"
                 />
               </div>
             </div>
