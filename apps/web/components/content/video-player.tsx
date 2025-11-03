@@ -2,7 +2,9 @@
 
 import { Button } from "@workspace/ui/components/button";
 import {
+  Check,
   Expand,
+  Gauge,
   Pause,
   Play,
   Settings,
@@ -10,7 +12,6 @@ import {
   Volume,
   Volume2,
   VolumeX,
-  Zap,
 } from "@workspace/ui/icons";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "@workspace/ui/lib/utils";
@@ -31,7 +32,7 @@ export default function VideoPlayer({
   title,
   userId,
   description = "",
-  height = "72vh",
+  height = "75vh",
   autoplay = false,
   muted = false,
   thumbnail = "",
@@ -52,7 +53,7 @@ export default function VideoPlayer({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isMuted, setIsMuted] = useState(muted);
   const [qualities, setQualities] = useState<
-    Array<{ height: number; bitrate: number }>
+    Array<{ height: number; bitrate: number; originalIndex: number }>
   >([]);
   const [showControls, setShowControls] = useState(true);
   const [isQualityOpen, setIsQualityOpen] = useState(false);
@@ -122,10 +123,13 @@ export default function VideoPlayer({
           hls.on("hlsManifestParsed", () => {
             if (!isMountedRef.current) return;
 
-            const levelQualities = hls.levels.map((level: any) => ({
-              height: level.height,
-              bitrate: level.bitrate,
-            }));
+            const levelQualities = hls.levels
+              .map((level: any, idx: number) => ({
+                height: level.height,
+                bitrate: level.bitrate,
+                originalIndex: idx,
+              }))
+              .reverse();
 
             setQualities(levelQualities);
             setSelectedQuality(hls.currentLevel);
@@ -182,10 +186,16 @@ export default function VideoPlayer({
       document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
-  const handleQualityChange = (levelIndex: number) => {
-    if (hlsRef.current) {
-      hlsRef.current.currentLevel = levelIndex;
-      setSelectedQuality(levelIndex);
+  const handleQualityChange = (reversedIndex: number) => {
+    if (reversedIndex === -1) {
+      if (hlsRef.current) {
+        hlsRef.current.currentLevel = -1;
+        setSelectedQuality(-1);
+      }
+    } else if (hlsRef.current && qualities[reversedIndex]) {
+      const originalIndex = qualities[reversedIndex].originalIndex;
+      hlsRef.current.currentLevel = originalIndex;
+      setSelectedQuality(originalIndex);
     }
     setIsQualityOpen(false);
   };
@@ -274,7 +284,7 @@ export default function VideoPlayer({
           }}
         >
           {/* Progress Bar */}
-          <div className="px-4 pt-6 ">
+          <div className="px-4 pt-6">
             <div
               className="group/progress cursor-pointer"
               onClick={(e) => {
@@ -295,10 +305,10 @@ export default function VideoPlayer({
           </div>
 
           {/* Gradient Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none " />
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
 
           {/* Control Buttons */}
-          <div className="relative  p-4 flex items-center justify-between">
+          <div className="relative p-4 flex items-center justify-between">
             <div className="flex items-center gap-1">
               {/* Play/Pause */}
               <Button
@@ -321,7 +331,7 @@ export default function VideoPlayer({
               </Button>
 
               {/* Time Display */}
-              <span className="text-sm  text-foreground ml-4">
+              <span className="text-sm text-foreground ml-4">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
 
@@ -335,7 +345,7 @@ export default function VideoPlayer({
                       videoRef.current.muted = !isMuted;
                     }
                   }}
-                  className="size-11"
+                  className="hover:bg-primary/20 size-11"
                 >
                   {isMuted || volume === 0 ? (
                     <VolumeX className="size-7 text-white" />
@@ -378,6 +388,7 @@ export default function VideoPlayer({
                     className="hover:bg-primary/20 size-11"
                     onClick={() => {
                       setIsQualityOpen(!isQualityOpen);
+                      setIsSpeedOpen(false);
                       if (!isQualityOpen) {
                         setShowControls(true);
                         if (controlsTimeoutRef.current)
@@ -389,36 +400,49 @@ export default function VideoPlayer({
                   </Button>
 
                   {isQualityOpen && (
-                    <div className="absolute bottom-full  right-0 mb-2 w-40 bg-background/70 backdrop-blur-lg border border-border  shadow-lg z-50 overflow-hidden">
+                    <div className="absolute bottom-full right-0 mb-4 w-40 bg-background/70 backdrop-blur-lg border border-border shadow-lg z-50 overflow-hidden ">
                       <div className="px-3 py-2 text-xs uppercase tracking-wide font-semibold text-foreground/70">
                         Quality
                       </div>
                       <div className="border-t border-border" />
-                      <button
-                        onClick={() => handleQualityChange(-1)}
-                        className={cn(
-                          "w-full text-left px-3 py-2 text-sm hover:bg-primary/20 transition-colors",
-                          selectedQuality === -1 && "bg-primary/20",
-                        )}
-                      >
-                        <span className="flex items-center justify-between">
-                          Auto
-                        </span>
-                      </button>
+
                       {qualities.map((q, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleQualityChange(idx)}
                           className={cn(
-                            "w-full text-left px-3 py-2 text-sm hover:bg-primary/20 transition-colors",
-                            selectedQuality === idx && "bg-primary/20",
+                            "w-full text-left px-3 cursor-pointer py-2 text-sm hover:bg-primary/10 transition-colors",
+                            selectedQuality === q.originalIndex &&
+                              "bg-primary/20",
                           )}
                         >
                           <span className="flex items-center justify-between">
                             {q.height}p
+                            {selectedQuality === q.originalIndex && (
+                              <span>
+                                <Check className="size-5" />
+                              </span>
+                            )}
                           </span>
                         </button>
                       ))}
+
+                      <button
+                        onClick={() => handleQualityChange(-1)}
+                        className={cn(
+                          "w-full text-left cursor-pointer px-3 py-2 text-sm hover:bg-primary/10 transition-colors",
+                          selectedQuality === -1 && "bg-primary/20",
+                        )}
+                      >
+                        <span className="flex items-center justify-between">
+                          Auto
+                          {selectedQuality === -1 && (
+                            <span>
+                              <Check className="size-5" />
+                            </span>
+                          )}
+                        </span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -432,6 +456,7 @@ export default function VideoPlayer({
                   className="hover:bg-primary/20 size-11"
                   onClick={() => {
                     setIsSpeedOpen(!isSpeedOpen);
+                    setIsQualityOpen(false);
                     if (!isSpeedOpen) {
                       setShowControls(true);
                       if (controlsTimeoutRef.current)
@@ -439,11 +464,11 @@ export default function VideoPlayer({
                     }
                   }}
                 >
-                  <Zap className="size-7 text-white" />
+                  <Gauge className="size-7 text-white" />
                 </Button>
 
                 {isSpeedOpen && (
-                  <div className="absolute bottom-full right-0 mb-2 w-40 bg-background/70 backdrop-blur-lg border border-border  shadow-lg z-50 overflow-hidden">
+                  <div className="absolute bottom-full right-0 mb-4 w-40 bg-background/70 backdrop-blur-lg border border-border shadow-lg z-50 overflow-hidden ">
                     <div className="px-3 py-2 text-xs uppercase tracking-wide font-semibold text-foreground/70">
                       Speed
                     </div>
@@ -453,12 +478,17 @@ export default function VideoPlayer({
                         key={speed}
                         onClick={() => handleSpeedChange(speed)}
                         className={cn(
-                          "w-full text-left px-3 py-2 text-sm hover:bg-primary/20 transition-colors",
+                          "w-full text-left px-3 py-2 text-sm hover:bg-primary/10 transition-colors",
                           playbackSpeed === speed && "bg-primary/20",
                         )}
                       >
                         <span className="flex items-center justify-between">
                           {speed}x
+                          {playbackSpeed === speed && (
+                            <span>
+                              <Check className="size-5" />
+                            </span>
+                          )}
                         </span>
                       </button>
                     ))}
