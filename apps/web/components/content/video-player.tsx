@@ -41,6 +41,10 @@ export default function VideoPlayer({
   const hlsRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<{
+    controls?: NodeJS.Timeout;
+    mouseMove?: NodeJS.Timeout;
+  }>({});
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,8 +62,6 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const [isQualityOpen, setIsQualityOpen] = useState(false);
   const [isSpeedOpen, setIsSpeedOpen] = useState(false);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout>(null);
-  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>(null);
 
   const isMountedRef = useRef(true);
   const isAnyMenuOpen = isQualityOpen || isSpeedOpen;
@@ -77,17 +79,24 @@ export default function VideoPlayer({
   };
 
   const handleMouseMove = () => {
-    if (mouseMoveTimeoutRef.current) clearTimeout(mouseMoveTimeoutRef.current);
+    if (timeoutRef.current.mouseMove)
+      clearTimeout(timeoutRef.current.mouseMove);
 
     setShowControls(true);
-    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    if (timeoutRef.current.controls) clearTimeout(timeoutRef.current.controls);
 
     if (isPlaying && !isAnyMenuOpen) {
-      mouseMoveTimeoutRef.current = setTimeout(() => {
-        controlsTimeoutRef.current = setTimeout(() => {
+      timeoutRef.current.mouseMove = setTimeout(() => {
+        timeoutRef.current.controls = setTimeout(() => {
           setShowControls(false);
         }, 3000);
       }, 100);
+    }
+  };
+
+  const handlePlayPause = () => {
+    if (videoRef.current) {
+      isPlaying ? videoRef.current.pause() : videoRef.current.play();
     }
   };
 
@@ -114,30 +123,20 @@ export default function VideoPlayer({
           const hls = new Hls({
             debug: false,
             enableWorker: true,
-
-            // VOD OPTIMIZATIONS:
-            maxBufferLength: 30, // Can buffer more for VoD (smooth seeking)
-            maxMaxBufferLength: 60, // Allow up to 60s buffer on fast connections
-            maxBufferSize: 60 * 1000 * 1000, // 60MB buffer
-            maxBufferHoleDuration: 0.5, // Fill gaps quickly
-
-            // VoD-specific ABR (Adaptive Bitrate)
-            abrEwmaDefaultEstimate: 500000, // Start with 500kbps estimate
-            abrEwmaFastVoD: 3, // Fast reaction to bandwidth (3 segments)
-            abrEwmaSlowVoD: 9, // Slow smoothing (9 segments)
-            abrBandWidthFactor: 0.95, // More aggressive (95% vs 80% for live)
-            abrBandWidthUpFactor: 0.7, // Quick quality upgrade
-
-            // Startup optimization
-            startLevel: -1, // Auto-select initial quality
-            testBandwidth: true, // Test bandwidth on startup
-            progressive: false, // Use fMP4 (faster)
-
-            // Seeking optimization
-            startFragPrefetch: true, // Prefetch next segment
-            backBufferLength: 10, // Keep 10s behind playhead (for rewinding)
-
-            // Error handling
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            maxBufferSize: 60 * 1000 * 1000,
+            maxBufferHoleDuration: 0.5,
+            abrEwmaDefaultEstimate: 500000,
+            abrEwmaFastVoD: 3,
+            abrEwmaSlowVoD: 9,
+            abrBandWidthFactor: 0.95,
+            abrBandWidthUpFactor: 0.7,
+            startLevel: -1,
+            testBandwidth: true,
+            progressive: false,
+            startFragPrefetch: true,
+            backBufferLength: 10,
             fragLoadingMaxRetry: 3,
             manifestLoadingMaxRetry: 3,
             levelLoadingMaxRetry: 2,
@@ -195,9 +194,10 @@ export default function VideoPlayer({
 
     return () => {
       isMountedRef.current = false;
-      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-      if (mouseMoveTimeoutRef.current)
-        clearTimeout(mouseMoveTimeoutRef.current);
+      if (timeoutRef.current.controls)
+        clearTimeout(timeoutRef.current.controls);
+      if (timeoutRef.current.mouseMove)
+        clearTimeout(timeoutRef.current.mouseMove);
     };
   }, [hlsUrl, autoplay]);
 
@@ -273,9 +273,18 @@ export default function VideoPlayer({
           poster={thumbnail}
         />
 
+        {/* Clickable Video Area - Pause/Play on Click Anywhere */}
+        <div
+          className="absolute inset-0 z-20"
+          onClick={handlePlayPause}
+          style={{
+            cursor: "pointer",
+          }}
+        />
+
         {/* Loading Spinner */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
@@ -284,7 +293,7 @@ export default function VideoPlayer({
 
         {/* Error Message */}
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-10">
             <div className="text-center space-y-3">
               <div className="text-2xl">⚠️</div>
               <p className="text-destructive font-semibold">{error}</p>
@@ -304,8 +313,8 @@ export default function VideoPlayer({
           )}
           onMouseEnter={() => {
             setShowControls(true);
-            if (controlsTimeoutRef.current)
-              clearTimeout(controlsTimeoutRef.current);
+            if (timeoutRef.current.controls)
+              clearTimeout(timeoutRef.current.controls);
           }}
         >
           {/* Progress Bar */}
@@ -339,13 +348,7 @@ export default function VideoPlayer({
               <Button
                 size="icon"
                 variant="ghost"
-                onClick={() => {
-                  if (videoRef.current) {
-                    isPlaying
-                      ? videoRef.current.pause()
-                      : videoRef.current.play();
-                  }
-                }}
+                onClick={handlePlayPause}
                 className="hover:bg-primary/20 size-11"
               >
                 {isPlaying ? (
@@ -404,7 +407,7 @@ export default function VideoPlayer({
             </div>
 
             <div className="flex items-center gap-1">
-              {/* Quality Menu - Custom Dropdown */}
+              {/* Quality Menu */}
               {qualities.length > 0 && (
                 <div className="relative group">
                   <Button
@@ -416,8 +419,8 @@ export default function VideoPlayer({
                       setIsSpeedOpen(false);
                       if (!isQualityOpen) {
                         setShowControls(true);
-                        if (controlsTimeoutRef.current)
-                          clearTimeout(controlsTimeoutRef.current);
+                        if (timeoutRef.current.controls)
+                          clearTimeout(timeoutRef.current.controls);
                       }
                     }}
                   >
@@ -444,9 +447,7 @@ export default function VideoPlayer({
                           <span className="flex items-center justify-between">
                             {q.height}p
                             {selectedQuality === q.originalIndex && (
-                              <span>
-                                <Check className="size-5" />
-                              </span>
+                              <Check className="size-4" />
                             )}
                           </span>
                         </button>
@@ -462,9 +463,7 @@ export default function VideoPlayer({
                         <span className="flex items-center justify-between">
                           Auto
                           {selectedQuality === -1 && (
-                            <span>
-                              <Check className="size-5" />
-                            </span>
+                            <Check className="size-4" />
                           )}
                         </span>
                       </button>
@@ -473,7 +472,7 @@ export default function VideoPlayer({
                 </div>
               )}
 
-              {/* Speed Menu - Custom Dropdown */}
+              {/* Speed Menu */}
               <div className="relative group">
                 <Button
                   size="icon"
@@ -484,8 +483,8 @@ export default function VideoPlayer({
                     setIsQualityOpen(false);
                     if (!isSpeedOpen) {
                       setShowControls(true);
-                      if (controlsTimeoutRef.current)
-                        clearTimeout(controlsTimeoutRef.current);
+                      if (timeoutRef.current.controls)
+                        clearTimeout(timeoutRef.current.controls);
                     }
                   }}
                 >
@@ -510,9 +509,7 @@ export default function VideoPlayer({
                         <span className="flex items-center justify-between">
                           {speed}x
                           {playbackSpeed === speed && (
-                            <span>
-                              <Check className="size-5" />
-                            </span>
+                            <Check className="size-4" />
                           )}
                         </span>
                       </button>
