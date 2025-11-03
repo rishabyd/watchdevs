@@ -2,14 +2,6 @@
 
 import { Button } from "@workspace/ui/components/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import {
   Expand,
   Pause,
   Play,
@@ -18,7 +10,6 @@ import {
   Volume,
   Volume2,
   VolumeX,
-  Gauge,
   Zap,
 } from "@workspace/ui/icons";
 import { useEffect, useRef, useState } from "react";
@@ -48,6 +39,7 @@ export default function VideoPlayer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const hlsRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const controlsRef = useRef<HTMLDivElement>(null);
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +58,7 @@ export default function VideoPlayer({
   const [isQualityOpen, setIsQualityOpen] = useState(false);
   const [isSpeedOpen, setIsSpeedOpen] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>(null);
+  const mouseMoveTimeoutRef = useRef<NodeJS.Timeout>(null);
 
   const isMountedRef = useRef(true);
   const isAnyMenuOpen = isQualityOpen || isSpeedOpen;
@@ -83,13 +76,17 @@ export default function VideoPlayer({
   };
 
   const handleMouseMove = () => {
+    if (mouseMoveTimeoutRef.current) clearTimeout(mouseMoveTimeoutRef.current);
+
     setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
 
     if (isPlaying && !isAnyMenuOpen) {
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
+      mouseMoveTimeoutRef.current = setTimeout(() => {
+        controlsTimeoutRef.current = setTimeout(() => {
+          setShowControls(false);
+        }, 3000);
+      }, 100);
     }
   };
 
@@ -170,14 +167,27 @@ export default function VideoPlayer({
     return () => {
       isMountedRef.current = false;
       if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+      if (mouseMoveTimeoutRef.current)
+        clearTimeout(mouseMoveTimeoutRef.current);
     };
   }, [hlsUrl, autoplay]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
 
   const handleQualityChange = (levelIndex: number) => {
     if (hlsRef.current) {
       hlsRef.current.currentLevel = levelIndex;
       setSelectedQuality(levelIndex);
     }
+    setIsQualityOpen(false);
   };
 
   const handleFullscreen = () => {
@@ -187,7 +197,6 @@ export default function VideoPlayer({
       } else {
         document.exitFullscreen().catch(() => {});
       }
-      setIsFullscreen(!isFullscreen);
     }
   };
 
@@ -196,13 +205,14 @@ export default function VideoPlayer({
       videoRef.current.playbackRate = speed;
       setPlaybackSpeed(speed);
     }
+    setIsSpeedOpen(false);
   };
 
   return (
     <div className="w-full bg-background">
       <div
         ref={containerRef}
-        className="relative overflow-hidden bg-black  shadow-lg border border-border"
+        className="relative overflow-hidden bg-black shadow-lg border border-border"
         style={{ height }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() =>
@@ -252,10 +262,16 @@ export default function VideoPlayer({
 
         {/* Controls Container */}
         <div
+          ref={controlsRef}
           className={cn(
-            "absolute bottom-0 left-0 right-0 transition-opacity duration-300",
+            "absolute bottom-0 left-0 right-0 transition-opacity duration-300 z-40",
             showControls || isAnyMenuOpen ? "opacity-100" : "opacity-0",
           )}
+          onMouseEnter={() => {
+            setShowControls(true);
+            if (controlsTimeoutRef.current)
+              clearTimeout(controlsTimeoutRef.current);
+          }}
         >
           {/* Progress Bar */}
           <div className="px-4 pt-6 pb-2">
@@ -305,7 +321,7 @@ export default function VideoPlayer({
               </Button>
 
               {/* Time Display */}
-              <span className="text-sm font-mono text-  foreground ml-4">
+              <span className="text-sm font-mono text-foreground ml-4">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
 
@@ -352,118 +368,102 @@ export default function VideoPlayer({
             </div>
 
             <div className="flex items-center gap-1">
-              {/* Quality Menu */}
+              {/* Quality Menu - Custom Dropdown */}
               {qualities.length > 0 && (
-                <DropdownMenu
-                  open={isQualityOpen}
-                  onOpenChange={(open) => {
-                    setIsQualityOpen(open);
-                    if (open) {
-                      setShowControls(true);
-                      if (controlsTimeoutRef.current)
-                        clearTimeout(controlsTimeoutRef.current);
-                    } else {
-                      handleMouseMove();
-                    }
-                  }}
-                  modal={false}
-                >
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="hover:bg-primary/20"
-                    >
-                      <Settings className="size-5 text-white" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    side="top"
-                    className="w-40 bg-background/50 backdrop-blur-lg "
-                  >
-                    <DropdownMenuLabel className="text-xs uppercase tracking-wide">
-                      Quality
-                    </DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem
-                      onClick={() => handleQualityChange(-1)}
-                      className={cn(
-                        "cursor-pointer",
-                        selectedQuality === -1 && "bg-primary/20",
-                      )}
-                    >
-                      <span className="flex-1">Auto</span>
-                    </DropdownMenuItem>
-                    {qualities.map((q, idx) => (
-                      <DropdownMenuItem
-                        key={idx}
-                        onClick={() => handleQualityChange(idx)}
-                        className={cn(
-                          "cursor-pointer",
-                          selectedQuality === idx && "bg-primary/20",
-                        )}
-                      >
-                        <span className="flex-1">{q.height}p</span>
-                        {selectedQuality === idx && (
-                          <span className="text-xs">✓</span>
-                        )}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-
-              {/* Speed Menu */}
-              <DropdownMenu
-                open={isSpeedOpen}
-                onOpenChange={(open) => {
-                  setIsSpeedOpen(open);
-                  if (open) {
-                    setShowControls(true);
-                    if (controlsTimeoutRef.current)
-                      clearTimeout(controlsTimeoutRef.current);
-                  } else {
-                    handleMouseMove();
-                  }
-                }}
-                modal={false}
-              >
-                <DropdownMenuTrigger asChild>
+                <div className="relative group">
                   <Button
                     size="icon"
                     variant="ghost"
                     className="hover:bg-primary/20"
+                    onClick={() => {
+                      setIsQualityOpen(!isQualityOpen);
+                      if (!isQualityOpen) {
+                        setShowControls(true);
+                        if (controlsTimeoutRef.current)
+                          clearTimeout(controlsTimeoutRef.current);
+                      }
+                    }}
                   >
-                    <Zap className="size-5 text-white" />
+                    <Settings className="size-5 text-white" />
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="end"
-                  side="top"
-                  className="w-40 bg-background/50 backdrop-blur-lg "
+
+                  {isQualityOpen && (
+                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-background/75 backdrop-blur-lg border border-border  shadow-lg z-50 overflow-hidden">
+                      <div className="px-3 py-2 text-xs uppercase tracking-wide font-semibold text-foreground/70">
+                        Quality
+                      </div>
+                      <div className="border-t border-border" />
+                      <button
+                        onClick={() => handleQualityChange(-1)}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-sm hover:bg-primary/20 transition-colors",
+                          selectedQuality === -1 && "bg-primary/20",
+                        )}
+                      >
+                        <span className="flex items-center justify-between">
+                          Auto
+                        </span>
+                      </button>
+                      {qualities.map((q, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleQualityChange(idx)}
+                          className={cn(
+                            "w-full text-left px-3 py-2 text-sm hover:bg-primary/20 transition-colors",
+                            selectedQuality === idx && "bg-primary/20",
+                          )}
+                        >
+                          <span className="flex items-center justify-between">
+                            {q.height}p
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Speed Menu - Custom Dropdown */}
+              <div className="relative group">
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="hover:bg-primary/20"
+                  onClick={() => {
+                    setIsSpeedOpen(!isSpeedOpen);
+                    if (!isSpeedOpen) {
+                      setShowControls(true);
+                      if (controlsTimeoutRef.current)
+                        clearTimeout(controlsTimeoutRef.current);
+                    }
+                  }}
                 >
-                  <DropdownMenuLabel className="text-xs uppercase tracking-wide">
-                    Speed
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
-                    <DropdownMenuItem
-                      key={speed}
-                      onClick={() => handleSpeedChange(speed)}
-                      className={cn(
-                        "cursor-pointer",
-                        playbackSpeed === speed && "bg-primary/20",
-                      )}
-                    >
-                      <span className="flex-1">{speed}x</span>
-                      {playbackSpeed === speed && (
-                        <span className="text-xs">✓</span>
-                      )}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                  <Zap className="size-5 text-white" />
+                </Button>
+
+                {isSpeedOpen && (
+                  <div className="absolute bottom-full right-0 mb-2 w-40 bg-background/50 backdrop-blur-lg border border-border  shadow-lg z-50 overflow-hidden">
+                    <div className="px-3 py-2 text-xs uppercase tracking-wide font-semibold text-foreground/70">
+                      Speed
+                    </div>
+                    <div className="border-t border-border" />
+                    {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+                      <button
+                        key={speed}
+                        onClick={() => handleSpeedChange(speed)}
+                        className={cn(
+                          "w-full text-left px-3 py-2 text-sm hover:bg-primary/20 transition-colors",
+                          playbackSpeed === speed && "bg-primary/20",
+                        )}
+                      >
+                        <span className="flex items-center justify-between">
+                          {speed}x
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Fullscreen Button */}
               <Button
