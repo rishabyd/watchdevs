@@ -1,6 +1,28 @@
 "use client";
 
+import { Button } from "@workspace/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
+import {
+  Expand,
+  Pause,
+  Play,
+  Settings,
+  Shrink,
+  Volume,
+  Volume2,
+  VolumeX,
+  Gauge,
+  Zap,
+} from "@workspace/ui/icons";
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@workspace/ui/lib/utils";
 
 interface VideoPlayerProps {
   hlsUrl: string;
@@ -18,7 +40,7 @@ export default function VideoPlayer({
   title,
   userId,
   description = "",
-  height = "67vh",
+  height = "72vh",
   autoplay = false,
   muted = false,
   thumbnail = "",
@@ -34,17 +56,17 @@ export default function VideoPlayer({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [selectedQuality, setSelectedQuality] = useState<number>(-1);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isMuted, setIsMuted] = useState(muted);
   const [qualities, setQualities] = useState<
     Array<{ height: number; bitrate: number }>
   >([]);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout>(null);
 
   const isMountedRef = useRef(true);
 
-  // Format time helper
   const formatTime = (time: number) => {
     if (!isFinite(time)) return "00:00";
     const hours = Math.floor(time / 3600);
@@ -57,7 +79,17 @@ export default function VideoPlayer({
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
 
-  // Initialize HLS
+  const handleMouseMove = () => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+
+    if (isPlaying) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    }
+  };
+
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -90,7 +122,6 @@ export default function VideoPlayer({
           hls.on("hlsManifestParsed", () => {
             if (!isMountedRef.current) return;
 
-            // Extract available qualities
             const levelQualities = hls.levels.map((level: any) => ({
               height: level.height,
               bitrate: level.bitrate,
@@ -135,19 +166,17 @@ export default function VideoPlayer({
 
     return () => {
       isMountedRef.current = false;
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
     };
   }, [hlsUrl, autoplay]);
 
-  // Handle quality change
   const handleQualityChange = (levelIndex: number) => {
     if (hlsRef.current) {
       hlsRef.current.currentLevel = levelIndex;
       setSelectedQuality(levelIndex);
-      setShowSettings(false);
     }
   };
 
-  // Handle fullscreen
   const handleFullscreen = () => {
     if (containerRef.current) {
       if (!isFullscreen) {
@@ -159,24 +188,25 @@ export default function VideoPlayer({
     }
   };
 
-  // Handle speed change
   const handleSpeedChange = (speed: number) => {
     if (videoRef.current) {
       videoRef.current.playbackRate = speed;
       setPlaybackSpeed(speed);
-      setShowSettings(false);
     }
   };
 
   return (
-    <div className="w-full bg-black">
+    <div className="w-full bg-background">
       <div
         ref={containerRef}
-        className="relative overflow-hidden bg-black rounded-lg shadow-2xl border border-gray-800"
+        className="relative overflow-hidden bg-black rounded-lg shadow-lg border border-border"
         style={{ height }}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => isPlaying && setShowControls(false)}
       >
         {/* Video Element */}
         <video
+          autoPlay
           ref={videoRef}
           className="w-full h-full"
           onPlay={() => setIsPlaying(true)}
@@ -185,59 +215,74 @@ export default function VideoPlayer({
             setCurrentTime(videoRef.current?.currentTime || 0)
           }
           onLoadedMetadata={() => setDuration(videoRef.current?.duration || 0)}
-          onVolumeChange={() => setVolume(videoRef.current?.volume || 0)}
+          onVolumeChange={() => {
+            setVolume(videoRef.current?.volume || 0);
+            setIsMuted(videoRef.current?.muted || false);
+          }}
           title={title}
           poster={thumbnail}
         />
 
         {/* Loading Spinner */}
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 border-4 border-purple-600 border-t-pink-600 rounded-full animate-spin" />
-              <p className="text-white text-sm font-medium">Loading video...</p>
+              <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin" />
             </div>
           </div>
         )}
 
         {/* Error Message */}
         {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
-            <div className="text-center">
-              <p className="text-red-500 text-lg font-bold">
-                ⚠️ Playback Error
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+            <div className="text-center space-y-3">
+              <div className="text-2xl">⚠️</div>
+              <p className="text-destructive font-semibold">{error}</p>
+              <p className="text-muted-foreground text-sm">
+                Please try again later
               </p>
-              <p className="text-gray-200 text-sm mt-2">{error}</p>
             </div>
           </div>
         )}
 
-        {/* Premium Controls */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/70 to-transparent p-4 opacity-0 hover:opacity-100 transition-opacity duration-300 group">
+        {/* Controls Container */}
+        <div
+          className={cn(
+            "absolute bottom-0 left-0 right-0 transition-opacity duration-300",
+            showControls ? "opacity-100" : "opacity-0",
+          )}
+        >
           {/* Progress Bar */}
-          <div
-            className="mb-4 group/progress cursor-pointer"
-            onClick={(e) => {
-              if (videoRef.current) {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const percent = (e.clientX - rect.left) / rect.width;
-                videoRef.current.currentTime = percent * duration;
-              }
-            }}
-          >
-            <div className="bg-gray-700 h-1.5 rounded-full overflow-hidden group-hover/progress:h-2 transition-all">
-              <div
-                className="bg-gradient-to-r from-purple-600 to-pink-600 h-full rounded-full transition-all"
-                style={{ width: `${(currentTime / duration) * 100}%` }}
-              />
+          <div className="px-4 pt-6 pb-2">
+            <div
+              className="group/progress cursor-pointer"
+              onClick={(e) => {
+                if (videoRef.current) {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const percent = (e.clientX - rect.left) / rect.width;
+                  videoRef.current.currentTime = percent * duration;
+                }
+              }}
+            >
+              <div className="relative h-1 bg-secondary rounded-full overflow-hidden group-hover/progress:h-1.5 transition-all">
+                <div
+                  className="h-full bg-primary rounded-full transition-all"
+                  style={{ width: `${(currentTime / duration) * 100}%` }}
+                />
+              </div>
             </div>
           </div>
 
+          {/* Gradient Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
+
           {/* Control Buttons */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          <div className="relative px-4 pb-4 flex items-center justify-between">
+            <div className="flex items-center gap-1">
               {/* Play/Pause */}
-              <button
+              <Button
+                size="icon"
+                variant="ghost"
                 onClick={() => {
                   if (videoRef.current) {
                     isPlaying
@@ -245,24 +290,36 @@ export default function VideoPlayer({
                       : videoRef.current.play();
                   }
                 }}
-                className="text-white hover:text-purple-400 transition text-2xl flex-shrink-0"
-                title={isPlaying ? "Pause" : "Play"}
+                className="hover:bg-primary/20"
               >
-                {isPlaying ? "⏸" : "▶"}
-              </button>
+                {isPlaying ? (
+                  <Pause className="size-5 fill-white text-white" />
+                ) : (
+                  <Play className="size-5 fill-white text-white" />
+                )}
+              </Button>
 
               {/* Volume Control */}
-              <div className="flex items-center gap-2 group/volume">
-                <button
+              <div className="flex items-center gap-2 group/volume ml-2">
+                <Button
+                  size="icon"
+                  variant="ghost"
                   onClick={() => {
                     if (videoRef.current) {
                       videoRef.current.muted = !isMuted;
                     }
                   }}
-                  className="text-white hover:text-purple-400 transition text-lg flex-shrink-0"
+                  className="hover:bg-primary/20"
                 >
-                  {isMuted || volume === 0 ? "🔇" : volume < 0.5 ? "🔉" : "🔊"}
-                </button>
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="size-5 text-white" />
+                  ) : volume < 0.5 ? (
+                    <Volume className="size-5 text-white" />
+                  ) : (
+                    <Volume2 className="size-5 text-white" />
+                  )}
+                </Button>
+
                 <input
                   type="range"
                   min="0"
@@ -273,99 +330,119 @@ export default function VideoPlayer({
                     const vol = parseFloat(e.target.value);
                     if (videoRef.current) {
                       videoRef.current.volume = vol;
-                      videoRef.current.muted = vol === 0;
+                      if (vol === 0) {
+                        videoRef.current.muted = true;
+                      } else if (videoRef.current.muted) {
+                        videoRef.current.muted = false;
+                      }
                     }
                   }}
-                  className="w-20 h-1 bg-gray-700 rounded-full cursor-pointer opacity-0 group-hover/volume:opacity-100 transition-opacity"
+                  className="w-20 h-1 opacity-0 group-hover/volume:opacity-100 transition-opacity cursor-pointer"
                 />
               </div>
 
               {/* Time Display */}
-              <span className="text-white text-xs font-mono ml-2 flex-shrink-0">
+              <span className="text-xs font-mono text-muted-foreground ml-4">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Settings Menu */}
-              <div className="relative group/settings">
-                <button
-                  onClick={() => setShowSettings(!showSettings)}
-                  className="text-white hover:text-purple-400 transition text-lg flex-shrink-0"
-                  title="Settings"
-                >
-                  ⚙️
-                </button>
-
-                {showSettings && (
-                  <div className="absolute bottom-full right-0 mb-2 bg-gray-900 border border-gray-700 rounded-lg shadow-lg overflow-hidden min-w-max">
-                    {/* Quality Selection */}
-                    {qualities.length > 0 && (
-                      <div>
-                        <div className="px-4 py-2 text-gray-400 text-xs font-semibold border-b border-gray-700">
-                          QUALITY
-                        </div>
-                        <button
-                          onClick={() => handleQualityChange(-1)}
-                          className={`w-full text-left px-4 py-2 text-sm transition ${
-                            selectedQuality === -1
-                              ? "bg-purple-600 text-white"
-                              : "text-gray-300 hover:bg-gray-800"
-                          }`}
-                        >
-                          Auto
-                        </button>
-                        {qualities.map((q, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => handleQualityChange(idx)}
-                            className={`w-full text-left px-4 py-2 text-sm transition ${
-                              selectedQuality === idx
-                                ? "bg-purple-600 text-white"
-                                : "text-gray-300 hover:bg-gray-800"
-                            }`}
-                          >
-                            {q.height}p
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Playback Speed */}
-                    <div
-                      className={
-                        qualities.length > 0 ? "border-t border-gray-700" : ""
-                      }
+            <div className="flex items-center gap-1">
+              {/* Quality Menu - SEPARATE */}
+              {qualities.length > 0 && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="hover:bg-primary/20"
                     >
-                      <div className="px-4 py-2 text-gray-400 text-xs font-semibold border-b border-gray-700">
-                        SPEED
-                      </div>
-                      {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
-                        <button
-                          key={speed}
-                          onClick={() => handleSpeedChange(speed)}
-                          className={`w-full text-left px-4 py-2 text-sm transition ${
-                            playbackSpeed === speed
-                              ? "bg-purple-600 text-white"
-                              : "text-gray-300 hover:bg-gray-800"
-                          }`}
-                        >
-                          {speed}x
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+                      <Settings className="size-5 text-white" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" side="top" className="w-40">
+                    <DropdownMenuLabel className="text-xs uppercase tracking-wide">
+                      Video Quality
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleQualityChange(-1)}
+                      className={cn(
+                        "cursor-pointer",
+                        selectedQuality === -1 && "bg-primary/20",
+                      )}
+                    >
+                      <span className="flex-1">Auto</span>
+                      {selectedQuality === -1 && (
+                        <span className="text-xs">✓</span>
+                      )}
+                    </DropdownMenuItem>
+                    {qualities.map((q, idx) => (
+                      <DropdownMenuItem
+                        key={idx}
+                        onClick={() => handleQualityChange(idx)}
+                        className={cn(
+                          "cursor-pointer",
+                          selectedQuality === idx && "bg-primary/20",
+                        )}
+                      >
+                        <span className="flex-1">{q.height}p</span>
+                        {selectedQuality === idx && (
+                          <span className="text-xs">✓</span>
+                        )}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+
+              {/* Speed Menu - SEPARATE */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="hover:bg-primary/20"
+                  >
+                    <Gauge className="size-5 text-white" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuLabel className="text-xs uppercase tracking-wide">
+                    Playback Speed
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {[0.5, 0.75, 1, 1.25, 1.5, 2].map((speed) => (
+                    <DropdownMenuItem
+                      key={speed}
+                      onClick={() => handleSpeedChange(speed)}
+                      className={cn(
+                        "cursor-pointer",
+                        playbackSpeed === speed && "bg-primary/20",
+                      )}
+                    >
+                      <span className="flex-1">{speed}x</span>
+                      {playbackSpeed === speed && (
+                        <span className="text-xs">✓</span>
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Fullscreen Button */}
-              <button
+              <Button
+                size="icon"
+                variant="ghost"
                 onClick={handleFullscreen}
-                className="text-white hover:text-purple-400 transition text-lg flex-shrink-0"
-                title="Fullscreen"
+                className="hover:bg-primary/20"
               >
-                {isFullscreen ? "⛶" : "⛶"}
-              </button>
+                {isFullscreen ? (
+                  <Shrink className="size-5 text-white" />
+                ) : (
+                  <Expand className="size-5 text-white" />
+                )}
+              </Button>
             </div>
           </div>
         </div>
