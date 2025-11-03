@@ -212,7 +212,7 @@ export default function VideoPlayer({
     <div className="w-full bg-background">
       <div
         ref={containerRef}
-        className="relative overflow-hidden bg-black shadow-lg border border-border"
+        className="relative overflow-hidden bg-black shadow-lg border-b border-border"
         style={{ height }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() =>
@@ -274,7 +274,7 @@ export default function VideoPlayer({
           }}
         >
           {/* Progress Bar */}
-          <div className="px-4 pt-6 pb-2">
+          <div className="px-4 pt-6 ">
             <div
               className="group/progress cursor-pointer"
               onClick={(e) => {
@@ -285,7 +285,7 @@ export default function VideoPlayer({
                 }
               }}
             >
-              <div className="relative h-1 bg-secondary rounded-full overflow-hidden group-hover/progress:h-1.5 transition-all">
+              <div className="relative h-1.5 bg-secondary rounded-full overflow-hidden group-hover/progress:h-2 transition-all">
                 <div
                   className="h-full bg-primary rounded-full transition-all"
                   style={{ width: `${(currentTime / duration) * 100}%` }}
@@ -295,10 +295,10 @@ export default function VideoPlayer({
           </div>
 
           {/* Gradient Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
+          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none " />
 
           {/* Control Buttons */}
-          <div className="relative px-4 pb-4 flex items-center justify-between">
+          <div className="relative  p-4 flex items-center justify-between">
             <div className="flex items-center gap-1">
               {/* Play/Pause */}
               <Button
@@ -311,17 +311,17 @@ export default function VideoPlayer({
                       : videoRef.current.play();
                   }
                 }}
-                className="hover:bg-primary/20"
+                className="hover:bg-primary/20 size-11"
               >
                 {isPlaying ? (
-                  <Pause className="size-5 fill-white text-white" />
+                  <Pause className="size-7 fill-white text-white" />
                 ) : (
-                  <Play className="size-5 fill-white text-white" />
+                  <Play className="size-7 fill-white text-white" />
                 )}
               </Button>
 
               {/* Time Display */}
-              <span className="text-sm font-mono text-foreground ml-4">
+              <span className="text-sm  text-foreground ml-4">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
 
@@ -335,13 +335,14 @@ export default function VideoPlayer({
                       videoRef.current.muted = !isMuted;
                     }
                   }}
+                  className="size-11"
                 >
                   {isMuted || volume === 0 ? (
-                    <VolumeX className="size-5 text-white" />
+                    <VolumeX className="size-7 text-white" />
                   ) : volume < 0.5 ? (
-                    <Volume className="size-5 text-white" />
+                    <Volume className="size-7 text-white" />
                   ) : (
-                    <Volume2 className="size-5 text-white" />
+                    <Volume2 className="size-7 text-white" />
                   )}
                 </Button>
 
@@ -374,7 +375,7 @@ export default function VideoPlayer({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="hover:bg-primary/20"
+                    className="hover:bg-primary/20 size-11"
                     onClick={() => {
                       setIsQualityOpen(!isQualityOpen);
                       if (!isQualityOpen) {
@@ -384,11 +385,11 @@ export default function VideoPlayer({
                       }
                     }}
                   >
-                    <Settings className="size-5 text-white" />
+                    <Settings className="size-7 text-white" />
                   </Button>
 
                   {isQualityOpen && (
-                    <div className="absolute bottom-full right-0 mb-2 w-40 bg-background/75 backdrop-blur-lg border border-border  shadow-lg z-50 overflow-hidden">
+                    <div className="absolute bottom-full  right-0 mb-2 w-40 bg-background/70 backdrop-blur-lg border border-border  shadow-lg z-50 overflow-hidden">
                       <div className="px-3 py-2 text-xs uppercase tracking-wide font-semibold text-foreground/70">
                         Quality
                       </div>
@@ -428,7 +429,7 @@ export default function VideoPlayer({
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="hover:bg-primary/20"
+                  className="hover:bg-primary/20 size-11"
                   onClick={() => {
                     setIsSpeedOpen(!isSpeedOpen);
                     if (!isSpeedOpen) {
@@ -438,11 +439,11 @@ export default function VideoPlayer({
                     }
                   }}
                 >
-                  <Zap className="size-5 text-white" />
+                  <Zap className="size-7 text-white" />
                 </Button>
 
                 {isSpeedOpen && (
-                  <div className="absolute bottom-full right-0 mb-2 w-40 bg-background/50 backdrop-blur-lg border border-border  shadow-lg z-50 overflow-hidden">
+                  <div className="absolute bottom-full right-0 mb-2 w-40 bg-background/70 backdrop-blur-lg border border-border  shadow-lg z-50 overflow-hidden">
                     <div className="px-3 py-2 text-xs uppercase tracking-wide font-semibold text-foreground/70">
                       Speed
                     </div>
@@ -470,12 +471,12 @@ export default function VideoPlayer({
                 size="icon"
                 variant="ghost"
                 onClick={handleFullscreen}
-                className="hover:bg-primary/20"
+                className="hover:bg-primary/20 size-11"
               >
                 {isFullscreen ? (
-                  <Shrink className="size-5 text-white" />
+                  <Shrink className="size-7 text-white" />
                 ) : (
-                  <Expand className="size-5 text-white" />
+                  <Expand className="size-7 text-white" />
                 )}
               </Button>
             </div>
