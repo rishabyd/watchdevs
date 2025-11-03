@@ -125,6 +125,7 @@ model Video {
 
   bunnyVideoId String? @unique
   bunnyLibraryId String?
+  hlsUrl String? @unique
 
   title         String
   description   String?

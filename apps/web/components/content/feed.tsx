@@ -55,8 +55,7 @@ export function FeedClient({ initialData }: { initialData: any[] }) {
             description={video.description}
             creatorId={video.creatorId}
             creatorName={video.creatorName}
-            bunnyVideoId={video.bunnyVideoId}
-            bunnyLibraryId={video.bunnyLibraryId}
+            hlsUrl={video.hlsUrl}
             userId={video.creatorId}
             duration={video.duration}
             viewCount={video.viewCount}

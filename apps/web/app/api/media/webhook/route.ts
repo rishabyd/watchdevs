@@ -35,9 +35,10 @@ export async function POST(request: NextRequest) {
 
       case 3:
         console.log(`[Bunny Webhook] Video ${VideoGuid} ready`);
+        const hlsUrl = `https://${process.env.BUNNY_CDN_HOSTNAME}/${VideoGuid}/playlist.m3u8`;
         await prisma.video.updateMany({
           where: { bunnyVideoId: VideoGuid },
-          data: { status: "READY" },
+          data: { status: "READY", hlsUrl },
         });
         break;
 

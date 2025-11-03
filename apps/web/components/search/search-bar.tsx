@@ -1,7 +1,7 @@
 "use client";
 
 import { Input } from "@workspace/ui/components/input";
-import { Loader2Icon, LoaderIcon } from "@workspace/ui/icons";
+import { LoaderIcon } from "@workspace/ui/icons";
 import Link from "next/link";
 import { useState, useRef } from "react";
 

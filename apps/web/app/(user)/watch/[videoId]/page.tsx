@@ -20,8 +20,7 @@ export default async function VideoPage({ params }: PageProps) {
       id: true,
       title: true,
       description: true,
-      bunnyVideoId: true,
-      bunnyLibraryId: true,
+      hlsUrl: true,
       viewCount: true,
       createdAt: true,
       user: {
@@ -36,7 +35,7 @@ export default async function VideoPage({ params }: PageProps) {
     },
   });
 
-  if (!video || !video.bunnyVideoId) {
+  if (!video || !video.hlsUrl) {
     notFound();
   }
 
@@ -50,8 +49,7 @@ export default async function VideoPage({ params }: PageProps) {
   return (
     <div className="flex flex-1 mt-14 flex-col justify-center">
       <VideoPlayer
-        bunnyVideoId={video.bunnyVideoId}
-        bunnyLibraryId={video.bunnyLibraryId!}
+        hlsUrl={video.hlsUrl}
         title={video.title}
         userId={video.user.id}
       />

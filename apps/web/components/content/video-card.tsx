@@ -16,8 +16,8 @@ interface VideoCardProps {
   creatorId: string;
   creatorUsername: string;
   creatorName?: string;
-  bunnyVideoId: string;
-  bunnyLibraryId: string;
+  hlsUrl: string;
+
   userId: string;
   duration?: number | null;
   viewCount?: bigint;

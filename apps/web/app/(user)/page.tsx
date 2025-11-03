@@ -15,8 +15,7 @@ async function getVideoFeed(page = 0, limit = 20) {
       thumbnailKey: true,
       viewCount: true,
       duration: true,
-      bunnyVideoId: true,
-      bunnyLibraryId: true,
+      hlsUrl: true,
       createdAt: true,
       user: {
         select: {
@@ -36,8 +35,7 @@ async function getVideoFeed(page = 0, limit = 20) {
     thumbnailKey: video.thumbnailKey,
     viewCount: Number(video.viewCount),
     duration: video.duration,
-    bunnyVideoId: video.bunnyVideoId,
-    bunnyLibraryId: video.bunnyLibraryId,
+    hlsUrl: video.hlsUrl,
     creatorName: video.user.name,
     creatorUsername: video.user.profileUsername,
     creatorGithubUsername: video.user.githubUsername,
