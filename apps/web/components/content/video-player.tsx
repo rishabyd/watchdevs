@@ -10,6 +10,8 @@ import {
   Play,
   Settings,
   Shrink,
+  SkipBack,
+  SkipForward,
   Volume,
   Volume2,
   VolumeX,
@@ -102,6 +104,24 @@ export default function VideoPlayer({
     }
   };
 
+  const handleSkipForward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.min(
+        videoRef.current.currentTime + 10,
+        duration,
+      );
+    }
+  };
+
+  const handleSkipBackward = () => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = Math.max(
+        videoRef.current.currentTime - 10,
+        0,
+      );
+    }
+  };
+
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -125,17 +145,15 @@ export default function VideoPlayer({
           const hls = new Hls({
             debug: false,
             enableWorker: true,
-            maxBufferLength: 3, // Start playing ASAP (only 3 seconds)
-            maxMaxBufferLength: 30, // Max buffer during playback
+            maxBufferLength: 3,
+            maxMaxBufferLength: 30,
             maxBufferSize: 60 * 1000 * 1000,
             maxBufferHoleDuration: 0.5,
-
-            abrEwmaDefaultEstimate: 800000, // Assume 800kbps initially (faster than 500kbps)
-            abrEwmaFastVoD: 2, // Very fast quality upgrade (2 segments)
-            abrEwmaSlowVoD: 5, // Smooth downgrade
+            abrEwmaDefaultEstimate: 800000,
+            abrEwmaFastVoD: 2,
+            abrEwmaSlowVoD: 5,
             abrBandWidthFactor: 0.95,
             abrBandWidthUpFactor: 0.9,
-
             startLevel: -1,
             testBandwidth: false,
             progressive: false,
@@ -250,12 +268,10 @@ export default function VideoPlayer({
   const handleMuteToggle = () => {
     if (videoRef.current) {
       if (!isMuted) {
-        // Muting: save current volume and set to 0
         previousVolumeRef.current = volume;
         videoRef.current.volume = 0;
         setVolume(0);
       } else {
-        // Unmuting: restore previous volume
         videoRef.current.volume = previousVolumeRef.current;
         setVolume(previousVolumeRef.current);
       }
@@ -264,10 +280,10 @@ export default function VideoPlayer({
   };
 
   return (
-    <div className="w-full bg-background">
+    <div className="w-full ">
       <div
         ref={containerRef}
-        className="relative overflow-hidden bg-black shadow-lg border-b border-border"
+        className="relative overflow-hidden bg-black shadow-lg border-b "
         style={{ height }}
         onMouseMove={handleMouseMove}
         onMouseLeave={() =>
@@ -337,6 +353,9 @@ export default function VideoPlayer({
               clearTimeout(timeoutRef.current.controls);
           }}
         >
+          {/* Gradient Overlay */}
+          <div className="absolute bottom-0 left-0 right-0 h-36 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
+
           {/* Progress Bar */}
           <div className="px-4 pt-6">
             <div
@@ -349,17 +368,14 @@ export default function VideoPlayer({
                 }
               }}
             >
-              <div className="relative h-1.5 bg-secondary  overflow-hidden group-hover/progress:h-2 transition-all">
+              <div className="relative h-1.5 bg-secondary overflow-hidden group-hover/progress:h-2 transition-all ">
                 <div
-                  className="h-full bg-primary  transition-all"
+                  className="h-full bg-foreground transition-all"
                   style={{ width: `${(currentTime / duration) * 100}%` }}
                 />
               </div>
             </div>
           </div>
-
-          {/* Gradient Overlay */}
-          <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black via-black/50 to-transparent pointer-events-none" />
 
           {/* Control Buttons */}
           <div className="relative p-4 flex items-center justify-between">
@@ -376,6 +392,26 @@ export default function VideoPlayer({
                 ) : (
                   <Play className="size-7 fill-white text-white" />
                 )}
+              </Button>
+
+              {/* Skip Backward 10s */}
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleSkipBackward}
+                className="hover:bg-primary/20 size-11"
+              >
+                <SkipBack className="size-6 text-white" />
+              </Button>
+
+              {/* Skip Forward 10s */}
+              <Button
+                size="icon"
+                variant="ghost"
+                onClick={handleSkipForward}
+                className="hover:bg-primary/20 size-11"
+              >
+                <SkipForward className="size-6 text-white" />
               </Button>
 
               {/* Time Display */}
