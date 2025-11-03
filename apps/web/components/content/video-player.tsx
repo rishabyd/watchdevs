@@ -114,8 +114,33 @@ export default function VideoPlayer({
           const hls = new Hls({
             debug: false,
             enableWorker: true,
-            lowLatencyMode: true,
-            maxBufferLength: 30,
+
+            // VOD OPTIMIZATIONS:
+            maxBufferLength: 30, // Can buffer more for VoD (smooth seeking)
+            maxMaxBufferLength: 60, // Allow up to 60s buffer on fast connections
+            maxBufferSize: 60 * 1000 * 1000, // 60MB buffer
+            maxBufferHoleDuration: 0.5, // Fill gaps quickly
+
+            // VoD-specific ABR (Adaptive Bitrate)
+            abrEwmaDefaultEstimate: 500000, // Start with 500kbps estimate
+            abrEwmaFastVoD: 3, // Fast reaction to bandwidth (3 segments)
+            abrEwmaSlowVoD: 9, // Slow smoothing (9 segments)
+            abrBandWidthFactor: 0.95, // More aggressive (95% vs 80% for live)
+            abrBandWidthUpFactor: 0.7, // Quick quality upgrade
+
+            // Startup optimization
+            startLevel: -1, // Auto-select initial quality
+            testBandwidth: true, // Test bandwidth on startup
+            progressive: false, // Use fMP4 (faster)
+
+            // Seeking optimization
+            startFragPrefetch: true, // Prefetch next segment
+            backBufferLength: 10, // Keep 10s behind playhead (for rewinding)
+
+            // Error handling
+            fragLoadingMaxRetry: 3,
+            manifestLoadingMaxRetry: 3,
+            levelLoadingMaxRetry: 2,
           });
 
           hlsRef.current = hls;
