@@ -63,9 +63,12 @@ export default function VideoPlayer({
     Array<{ height: number; bitrate: number }>
   >([]);
   const [showControls, setShowControls] = useState(true);
+  const [isQualityOpen, setIsQualityOpen] = useState(false);
+  const [isSpeedOpen, setIsSpeedOpen] = useState(false);
   const controlsTimeoutRef = useRef<NodeJS.Timeout>(null);
 
   const isMountedRef = useRef(true);
+  const isAnyMenuOpen = isQualityOpen || isSpeedOpen;
 
   const formatTime = (time: number) => {
     if (!isFinite(time)) return "00:00";
@@ -83,7 +86,7 @@ export default function VideoPlayer({
     setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
 
-    if (isPlaying) {
+    if (isPlaying && !isAnyMenuOpen) {
       controlsTimeoutRef.current = setTimeout(() => {
         setShowControls(false);
       }, 3000);
@@ -202,7 +205,9 @@ export default function VideoPlayer({
         className="relative overflow-hidden bg-black  shadow-lg border border-border"
         style={{ height }}
         onMouseMove={handleMouseMove}
-        onMouseLeave={() => isPlaying && setShowControls(false)}
+        onMouseLeave={() =>
+          isPlaying && !isAnyMenuOpen && setShowControls(false)
+        }
       >
         {/* Video Element */}
         <video
@@ -249,7 +254,7 @@ export default function VideoPlayer({
         <div
           className={cn(
             "absolute bottom-0 left-0 right-0 transition-opacity duration-300",
-            showControls ? "opacity-100" : "opacity-0",
+            showControls || isAnyMenuOpen ? "opacity-100" : "opacity-0",
           )}
         >
           {/* Progress Bar */}
@@ -349,7 +354,20 @@ export default function VideoPlayer({
             <div className="flex items-center gap-1">
               {/* Quality Menu */}
               {qualities.length > 0 && (
-                <DropdownMenu>
+                <DropdownMenu
+                  open={isQualityOpen}
+                  onOpenChange={(open) => {
+                    setIsQualityOpen(open);
+                    if (open) {
+                      setShowControls(true);
+                      if (controlsTimeoutRef.current)
+                        clearTimeout(controlsTimeoutRef.current);
+                    } else {
+                      handleMouseMove();
+                    }
+                  }}
+                  modal={false}
+                >
                   <DropdownMenuTrigger asChild>
                     <Button
                       size="icon"
@@ -397,7 +415,20 @@ export default function VideoPlayer({
               )}
 
               {/* Speed Menu */}
-              <DropdownMenu>
+              <DropdownMenu
+                open={isSpeedOpen}
+                onOpenChange={(open) => {
+                  setIsSpeedOpen(open);
+                  if (open) {
+                    setShowControls(true);
+                    if (controlsTimeoutRef.current)
+                      clearTimeout(controlsTimeoutRef.current);
+                  } else {
+                    handleMouseMove();
+                  }
+                }}
+                modal={false}
+              >
                 <DropdownMenuTrigger asChild>
                   <Button
                     size="icon"
