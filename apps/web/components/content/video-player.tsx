@@ -125,17 +125,19 @@ export default function VideoPlayer({
           const hls = new Hls({
             debug: false,
             enableWorker: true,
-            maxBufferLength: 30,
-            maxMaxBufferLength: 60,
+            maxBufferLength: 3, // Start playing ASAP (only 3 seconds)
+            maxMaxBufferLength: 30, // Max buffer during playback
             maxBufferSize: 60 * 1000 * 1000,
             maxBufferHoleDuration: 0.5,
-            abrEwmaDefaultEstimate: 500000,
-            abrEwmaFastVoD: 3,
-            abrEwmaSlowVoD: 9,
+
+            abrEwmaDefaultEstimate: 800000, // Assume 800kbps initially (faster than 500kbps)
+            abrEwmaFastVoD: 2, // Very fast quality upgrade (2 segments)
+            abrEwmaSlowVoD: 5, // Smooth downgrade
             abrBandWidthFactor: 0.95,
-            abrBandWidthUpFactor: 0.7,
+            abrBandWidthUpFactor: 0.9,
+
             startLevel: -1,
-            testBandwidth: true,
+            testBandwidth: false,
             progressive: false,
             startFragPrefetch: true,
             backBufferLength: 10,
