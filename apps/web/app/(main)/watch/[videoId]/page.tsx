@@ -1,10 +1,7 @@
-// app/[videoId]/page.tsx - NO "use client"
 import VideoPlayer from "@/components/content/video-player";
 import { CreatorCard } from "@/components/creator/creator-card";
 import { prisma } from "@repo/db";
-import { Button } from "@workspace/ui/components/button";
-import { Github } from "@workspace/ui/icons";
-import Link from "next/link";
+
 import { notFound } from "next/navigation";
 
 type PageProps = {

@@ -6,7 +6,6 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get("page") || "0");
   const limit = 20;
 
-  // Fetch from database
   const data = await prisma.video.findMany({
     where: { visibility: "PUBLIC", status: "READY" },
     orderBy: { createdAt: "desc" },

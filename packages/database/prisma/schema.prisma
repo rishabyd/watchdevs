@@ -33,6 +33,7 @@ model User {
   // Optional profile fields
   accountType   AccountType @default(INDIVIDUAL)
 
+  bio             String?
 
   profileUsername String? @unique
   usernameChangedAt DateTime?

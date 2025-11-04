@@ -24,7 +24,7 @@ interface VideoCardProps {
   duration?: number | null;
   viewCount?: bigint;
   createdAt: string;
-  creatorAvatar: string;
+  creatorAvatar?: string;
 }
 
 function formatDuration(seconds: number): string {
@@ -121,6 +121,7 @@ export default function VideoCard({
   return (
     <Card className="p-0 gap-0 overflow-hidden hover:shadow-lg duration-300 shadow-none transition-all cursor-pointer border-0">
       {/* Thumbnail - Clickable to video */}
+
       <Link href={`/watch/${id}`}>
         <div className="relative  aspect-video w-full  bg-muted hover:opacity-80 transition-opacity">
           <Image
@@ -155,10 +156,12 @@ export default function VideoCard({
               className="hover:opacity-80 flex items-center transition-opacity"
             >
               <div className="flex items-center gap-2 ">
-                <Avatar className="w-8 h-8">
-                  <AvatarImage src={creatorAvatar} alt={creatorName} />
-                  <AvatarFallback>{creatorName.charAt(0)}</AvatarFallback>
-                </Avatar>
+                {creatorAvatar && (
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={creatorAvatar} alt={creatorName} />
+                    <AvatarFallback>{creatorName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                )}
                 <span className="text-sm text-muted-foreground ">
                   {creatorName}
                 </span>

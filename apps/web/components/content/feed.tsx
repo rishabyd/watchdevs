@@ -2,9 +2,8 @@
 
 import useSWRInfinite from "swr/infinite";
 import VideoCard from "@/components/content/video-card";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useInView } from "react-intersection-observer";
-import { useSession } from "@/lib/auth-client";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 

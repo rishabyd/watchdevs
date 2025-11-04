@@ -29,7 +29,7 @@ export default async function DashboardLayout({
       </div>
       <SidebarInset>
         <main>
-          <div className=" !bg-accent/40  h-full mx-auto">{children}</div>
+          <div className=" bg-accent/40  h-full mx-auto">{children}</div>
         </main>
       </SidebarInset>
     </SidebarProvider>
