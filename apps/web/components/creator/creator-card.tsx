@@ -4,6 +4,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Github, Star, Banknote } from "@workspace/ui/icons";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import GithubButton from "../socials/social";
 
 interface User {
   id: string;
@@ -54,18 +55,7 @@ export function CreatorCard({ user }: { user: User }) {
         {"Support"}
       </Button>
       {user.githubUsername && (
-        <Link
-          href={`https://github.com/${user.githubUsername}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className=""
-        >
-          <Button variant="outline" title="Creator's github">
-            <Github />
-            {user.githubUsername}
-          </Button>
-        </Link>
+        <GithubButton githubUsername={user.githubUsername} />
       )}
     </div>
   );

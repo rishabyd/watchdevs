@@ -1,4 +1,5 @@
 import VideoCard from "@/components/content/video-card";
+import GithubButton from "@/components/socials/social";
 import { auth } from "@/lib/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { prisma } from "@repo/db";
@@ -19,7 +20,16 @@ export default async function CreatorPage({
     where: { profileUsername: username },
     select: {
       id: true,
-      videos: true,
+      videos: {
+        select: {
+          id: true,
+          thumbnailKey: true,
+          title: true,
+          duration: true,
+          viewCount: true,
+          createdAt: true,
+        },
+      },
       githubUsername: true,
       bio: true,
       image: true,
@@ -30,34 +40,39 @@ export default async function CreatorPage({
   const isMe = session?.user.id === userData?.id;
 
   return (
-    <div className="mt-14">
-      <div className="h-80 px-52 pt-36 gap-5 flex">
-        <div className="flex-col flex gap-3 items-center cursor-pointer   w-fit ">
-          <Avatar className="w-36 h-36">
-            <AvatarImage src={userData?.image!} alt={userData?.name!} />
-            <AvatarFallback className="rounded-full">
-              {userData?.name!.charAt(0)}
-            </AvatarFallback>
-          </Avatar>
-          {isMe ? null : (
-            <div>
-              <Button size={"lg"} className="text-lg">
-                Follow
-              </Button>
-            </div>
-          )}
-        </div>
-        <div className="pt-4">
-          <span className="text-4xl  ">{userData?.name}</span>
-          <div className="flex gap-3 mt-1">
-            <div className="text-muted-foreground">@{username}</div>
-            <div>•</div>
-            <div>{userData?._count.followers} Followers</div>
+    <div className="mt-14 flex-col flex gap-2">
+      <div className="h-80 px-52 bg-background pt-24  flex-col flex">
+        <div className="flex gap-5">
+          <div className="flex-col flex gap-3 items-center cursor-pointer   w-fit ">
+            <Avatar className="w-36 h-36">
+              <AvatarImage src={userData?.image!} alt={userData?.name!} />
+              <AvatarFallback className="rounded-full">
+                {userData?.name!.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
           </div>
-          <div className="mt-3">{userData?.bio}</div>
+          <div className="pt-4">
+            <span className="text-4xl  ">{userData?.name}</span>
+            <div className="flex gap-3 mt-1">
+              <div className="text-muted-foreground">@{username}</div>
+              <div>•</div>
+              <div>{userData?._count.followers} Followers</div>
+            </div>
+            <div className="mt-3">{userData?.bio}</div>
+          </div>
+        </div>
+        <div className="flex gap-3 items-center h-full">
+          <Button size={"lg"} className="text-lg">
+            Follow
+          </Button>
+          <GithubButton
+            size={"lg"}
+            githubUsername={userData?.githubUsername!}
+          />
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 px-10 lg:grid-cols-5 gap-4">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 px-2 lg:grid-cols-4 gap-2">
         {userData?.videos.map((video) => (
           <VideoCard
             viewMode="square"

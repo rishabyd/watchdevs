@@ -50,7 +50,7 @@ export default function VideoCard({
   const thumbnailUrl = thumbnailKey
     ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${thumbnailKey}`
     : "/placeholder-thumbnail.jpg";
-
+  console.log(duration);
   if (viewMode === "rectangle") {
     return (
       <Card className=" p-0 overflow-hidden  duration-300 hover:shadow-lg shadow-none transition-all  border-0">
@@ -66,7 +66,7 @@ export default function VideoCard({
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
               {duration && (
-                <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+                <div className="absolute bottom-2 right-2 bg-black/80 text-white text-sm px-2 py-1 ">
                   {formatDuration(duration)}
                 </div>
               )}
@@ -132,7 +132,7 @@ export default function VideoCard({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           />
           {duration && (
-            <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+            <div className="absolute bottom-2 right-2 bg-black/80 text-white text-sm px-2 py-1 ">
               {formatDuration(duration)}
             </div>
           )}

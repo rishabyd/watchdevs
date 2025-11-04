@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     title: video.title,
     description: video.description,
     thumbnailKey: video.thumbnailKey,
-    viewCount: video.viewCount,
+    viewCount: Number(video.viewCount),
     duration: video.duration,
     bunnyVideoId: video.bunnyVideoId,
     bunnyLibraryId: video.bunnyLibraryId,

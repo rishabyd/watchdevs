@@ -36,9 +36,19 @@ export async function POST(request: NextRequest) {
       case 3:
         console.log(`[Bunny Webhook] Video ${VideoGuid} ready`);
         const hlsUrl = `https://${process.env.BUNNY_CDN_HOSTNAME}/${VideoGuid}/playlist.m3u8`;
+        const response = await fetch(
+          `https://video.bunnycdn.com/library/${process.env.BUNNY_STREAM_LIBRARY_ID}/videos/${VideoGuid}`,
+          {
+            headers: {
+              AccessKey: process.env.BUNNY_STREAM_API_KEY!,
+            },
+          },
+        );
+        const data = await response.json();
+
         await prisma.video.updateMany({
           where: { bunnyVideoId: VideoGuid },
-          data: { status: "READY", hlsUrl },
+          data: { status: "READY", hlsUrl, duration: data.length },
         });
         break;
 
