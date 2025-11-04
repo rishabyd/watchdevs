@@ -33,7 +33,7 @@ export function LoginForm({
 
       await signIn.social({
         provider: "github",
-        callbackURL: "/",
+        callbackURL: redirectTo,
       });
     } catch (error) {
       console.error("GitHub sign-in error:", error);
