@@ -2,20 +2,23 @@
 
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
-import { Search } from "@workspace/ui/icons";
+import { Loader2, Search } from "@workspace/ui/icons";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 
 export default function SearchBar() {
   const [query, setQuery] = useState("");
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (query.trim().length < 2) return;
 
-    router.push(`/search?q=${encodeURIComponent(query)}`);
+    startTransition(() => {
+      router.push(`/search?q=${encodeURIComponent(query)}`);
+    });
   };
 
   return (
@@ -25,10 +28,16 @@ export default function SearchBar() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search..."
-        className=" w-lg"
+        className="w-lg"
+        disabled={isPending}
       />
-      <Button className="border-l-0" variant={"outline"}>
-        <Search />
+      <Button
+        className="border-l-0"
+        variant="outline"
+        disabled={isPending}
+        type="submit"
+      >
+        {isPending ? <Loader2 className="animate-spin size-4" /> : <Search />}
       </Button>
     </form>
   );
