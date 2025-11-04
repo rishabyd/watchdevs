@@ -11,17 +11,15 @@ async function getVideoFeed(page = 0, limit = 20) {
       id: true,
       userId: true,
       title: true,
-      description: true,
       thumbnailKey: true,
       viewCount: true,
       duration: true,
-      hlsUrl: true,
       createdAt: true,
       user: {
         select: {
-          githubUsername: true,
           profileUsername: true,
           name: true,
+          image: true,
         },
       },
     },
@@ -31,18 +29,14 @@ async function getVideoFeed(page = 0, limit = 20) {
     id: video.id,
     creatorId: video.userId,
     title: video.title,
-    description: video.description,
     thumbnailKey: video.thumbnailKey,
     viewCount: Number(video.viewCount),
     duration: video.duration,
-    hlsUrl: video.hlsUrl,
     creatorName: video.user.name,
     creatorUsername: video.user.profileUsername,
-    creatorGithubUsername: video.user.githubUsername,
     createdAt: video.createdAt.toISOString(),
+    creatorAvatar: video.user.image,
   }));
-
-  // Store in Redis with 2 minute TTL
 
   return cleanData;
 }

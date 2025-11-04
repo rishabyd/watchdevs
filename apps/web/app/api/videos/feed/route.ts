@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
           githubUsername: true,
           profileUsername: true,
           name: true,
+          image: true,
         },
       },
     },
@@ -47,9 +48,8 @@ export async function GET(request: NextRequest) {
     creatorUsername: video.user.profileUsername,
     creatorGithubUsername: video.user.githubUsername,
     createdAt: video.createdAt.toISOString(),
+    creatorAvatar: video.user.image,
   }));
-
-  // Cache for 2 minutes
 
   return NextResponse.json(cleanData);
 }

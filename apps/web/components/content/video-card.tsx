@@ -7,6 +7,8 @@ import {
   CardContent,
 } from "@workspace/ui/components/card";
 import { formatDistanceToNowStrict } from "date-fns";
+import formatViews from "@/utils/format/format-views";
+import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 
 interface VideoCardProps {
   id: string;
@@ -16,12 +18,13 @@ interface VideoCardProps {
   creatorId: string;
   creatorUsername: string;
   creatorName?: string;
-  hlsUrl: string;
-
+  hlsUrl?: string;
+  viewMode: "square" | "rectangle";
   userId: string;
   duration?: number | null;
   viewCount?: bigint;
-  createdAt: string; // ISO string from server
+  createdAt: string;
+  creatorAvatar: string;
 }
 
 function formatDuration(seconds: number): string {
@@ -30,33 +33,96 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function formatViews(views: bigint): string {
-  const num = Number(views);
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
-}
-
 export default function VideoCard({
   id,
   thumbnailKey,
   title,
   description,
   creatorName,
+  creatorId,
   duration,
   viewCount = 0n,
   createdAt,
   creatorUsername,
+  viewMode,
+  creatorAvatar,
 }: VideoCardProps) {
   const thumbnailUrl = thumbnailKey
     ? `${process.env.NEXT_PUBLIC_R2_PUBLIC_URL}/${thumbnailKey}`
     : "/placeholder-thumbnail.jpg";
 
+  if (viewMode === "rectangle") {
+    return (
+      <Card className=" p-0 overflow-hidden  duration-300 hover:shadow-lg shadow-none transition-all  border-0">
+        <div className="flex p-3">
+          {/* Thumbnail */}
+          <div className="relative cursor-pointer aspect-video flex-2/5 w-full bg-muted">
+            <Link href={`/watch/${id}`}>
+              <Image
+                src={thumbnailUrl}
+                alt={title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+              {duration && (
+                <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+                  {formatDuration(duration)}
+                </div>
+              )}
+            </Link>
+          </div>
+
+          {/* Content */}
+          <CardContent className=" p-4   flex  flex-3/5 flex-col justify-between">
+            <Link href={`/watch/${id}`} className="cursor-pointer">
+              <CardTitle className="text-2xl font-semibold line-clamp-2">
+                {title}
+              </CardTitle>
+              {description && (
+                <p className="text-lg text-muted-foreground line-clamp-1 mt-1">
+                  {description}
+                </p>
+              )}
+              {/* Meta */}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                <span>{formatViews(viewCount)} views</span>
+                <span>•</span>
+                <span>
+                  {formatDistanceToNowStrict(new Date(createdAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+              </div>
+            </Link>
+
+            {creatorName && (
+              <Link href={`/${creatorUsername}`}>
+                <div className="flex items-center cursor-pointer gap-2 mt-3  w-fit p-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={creatorAvatar} alt={creatorName} />
+                    <AvatarFallback className="rounded-full">
+                      {creatorName.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-lg text-muted-foreground">
+                    {creatorName}
+                  </span>
+                </div>
+              </Link>
+            )}
+          </CardContent>
+        </div>
+      </Card>
+    );
+  }
+
+  // Square view (default)
   return (
-    <Link href={`/watch/${id}`}>
-      <Card className="rounded-none p-3 overflow-hidden hover:bg-accent/70 duration-300 hover:shadow-lg gap-2 shadow-2xl transition-all cursor-pointer focus:scale-200">
-        {/* Thumbnail */}
-        <div className="relative aspect-video w-full bg-muted">
+    <Card className="p-0 gap-0 overflow-hidden hover:shadow-lg duration-300 shadow-none transition-all cursor-pointer border-0">
+      {/* Thumbnail - Clickable to video */}
+      <Link href={`/watch/${id}`}>
+        <div className="relative  aspect-video w-full  bg-muted hover:opacity-80 transition-opacity">
           <Image
             src={thumbnailUrl}
             alt={title}
@@ -70,32 +136,45 @@ export default function VideoCard({
             </div>
           )}
         </div>
+      </Link>
 
-        <CardContent className="px-2">
-          {/* Title */}
-          <CardTitle className="text-base font-mono line-clamp-2 mb-1">
+      <CardContent className="p-3">
+        {/* Title - Clickable to video */}
+        <Link href={`/watch/${id}`}>
+          <CardTitle className="text-lg font-semibold line-clamp-2">
             {title}
           </CardTitle>
+        </Link>
 
-          {/* Creator name */}
-          {creatorName && (
-            <CardDescription className="text-sm text-muted-foreground">
-              {creatorName}
-            </CardDescription>
-          )}
+        {/* Views and date */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
+          <span>{formatViews(viewCount)} views</span>
+          <span>•</span>
+          <span>
+            {formatDistanceToNowStrict(new Date(createdAt), {
+              addSuffix: true,
+            })}
+          </span>
+        </div>
 
-          {/* Views and date */}
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
-            <span>{formatViews(viewCount)} views</span>
-            <span>•</span>
-            <span>
-              {formatDistanceToNowStrict(new Date(createdAt), {
-                addSuffix: true,
-              })}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+        {/* Creator - Clickable to profile */}
+        {creatorName && (
+          <Link
+            href={`/${creatorUsername}`}
+            className="hover:opacity-80 transition-opacity"
+          >
+            <div className="flex items-center gap-2 mt-3">
+              <Avatar className="w-8 h-8">
+                <AvatarImage src={creatorAvatar} alt={creatorName} />
+                <AvatarFallback>{creatorName.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground ">
+                {creatorName}
+              </span>
+            </div>
+          </Link>
+        )}
+      </CardContent>
+    </Card>
   );
 }

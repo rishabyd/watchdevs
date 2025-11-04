@@ -4,6 +4,7 @@ import useSWRInfinite from "swr/infinite";
 import VideoCard from "@/components/content/video-card";
 import { useEffect, useRef } from "react";
 import { useInView } from "react-intersection-observer";
+import { useSession } from "@/lib/auth-client";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
@@ -14,7 +15,6 @@ export function FeedClient({ initialData }: { initialData: any[] }) {
 
     return `/api/videos/feed?page=${pageIndex}`;
   };
-
   const { data, size, setSize, isLoading, isValidating } = useSWRInfinite(
     getKey,
     fetcher,
@@ -47,15 +47,15 @@ export function FeedClient({ initialData }: { initialData: any[] }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {videos.map((video) => (
           <VideoCard
+            viewMode="square"
+            creatorAvatar={video.creatorAvatar}
             key={video.id}
             creatorUsername={video.creatorUsername}
             id={video.id}
             thumbnailKey={video.thumbnailKey}
             title={video.title}
-            description={video.description}
             creatorId={video.creatorId}
             creatorName={video.creatorName}
-            hlsUrl={video.hlsUrl}
             userId={video.creatorId}
             duration={video.duration}
             viewCount={video.viewCount}
