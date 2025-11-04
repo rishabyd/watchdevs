@@ -147,33 +147,36 @@ export default function VideoCard({
         </Link>
 
         {/* Views and date */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-          <span>{formatViews(viewCount)} views</span>
-          <span>•</span>
-          <span>
-            {formatDistanceToNowStrict(new Date(createdAt), {
-              addSuffix: true,
-            })}
-          </span>
-        </div>
-
-        {/* Creator - Clickable to profile */}
-        {creatorName && (
-          <Link
-            href={`/${creatorUsername}`}
-            className="hover:opacity-80 transition-opacity"
-          >
-            <div className="flex items-center gap-2 mt-3">
-              <Avatar className="w-8 h-8">
-                <AvatarImage src={creatorAvatar} alt={creatorName} />
-                <AvatarFallback>{creatorName.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground ">
-                {creatorName}
+        <div className="flex justify-between mt-3 items-center">
+          {/* Creator - Clickable to profile */}
+          {creatorName && (
+            <Link
+              href={`/${creatorUsername}`}
+              className="hover:opacity-80 flex items-center transition-opacity"
+            >
+              <div className="flex items-center gap-2 ">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={creatorAvatar} alt={creatorName} />
+                  <AvatarFallback>{creatorName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm text-muted-foreground ">
+                  {creatorName}
+                </span>
+              </div>
+            </Link>
+          )}
+          <Link href={`/watch/${id}`} className="flex justify-center">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground ">
+              <span>{formatViews(viewCount)} views</span>
+              <span>•</span>
+              <span>
+                {formatDistanceToNowStrict(new Date(createdAt), {
+                  addSuffix: true,
+                })}
               </span>
             </div>
           </Link>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
