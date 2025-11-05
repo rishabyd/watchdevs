@@ -1,6 +1,8 @@
 import VideoPlayer from "@/components/content/video-player";
 import { CreatorCard } from "@/components/creator/creator-card";
+import { auth } from "@/lib/auth";
 import { prisma } from "@repo/db";
+import { headers } from "next/headers";
 
 import { notFound } from "next/navigation";
 
@@ -10,6 +12,9 @@ type PageProps = {
 
 export default async function VideoPage({ params }: PageProps) {
   const { videoId } = await params;
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
   const video = await prisma.video.findUnique({
     where: { id: videoId },
     select: {
@@ -32,9 +37,19 @@ export default async function VideoPage({ params }: PageProps) {
       },
     },
   });
-  const isLiked = await prisma.videoLike.findFirst({
-    where: { videoId, userId: video?.user.id },
-  });
+  const [isLiked, followCount] = await Promise.all([
+    prisma.videoLike.findFirst({
+      where: { videoId, userId: video?.user.id },
+    }),
+    prisma.follow.count({
+      where: {
+        followerId: session?.user.id!,
+        followingId: video?.user?.id!,
+      },
+    }),
+  ]);
+
+  const isFollowing = followCount > 0;
 
   if (!video || !video.hlsUrl) {
     notFound();
@@ -60,6 +75,7 @@ export default async function VideoPage({ params }: PageProps) {
         <div className="flex">
           <div className="flex-4/6 w-full">
             <CreatorCard
+              isFollowing={!!isFollowing}
               videoId={videoId}
               user={video.user}
               likeCount={video.likeCount}

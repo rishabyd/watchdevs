@@ -38,7 +38,13 @@ export default async function CreatorPage({
       _count: { select: { videos: true, followers: true } },
     },
   });
-  const isMe = session?.user.id === userData?.id;
+  const isFollowing =
+    (await prisma.follow.count({
+      where: {
+        followerId: session?.user.id!,
+        followingId: userData?.id!,
+      },
+    })) > 0;
 
   return (
     <div className="mt-14 flex-col flex gap-2">
@@ -63,7 +69,11 @@ export default async function CreatorPage({
           </div>
         </div>
         <div className="flex gap-3 items-center h-full">
-          <FollowCreatorButton size="lg" creatorId={userData?.id!} />
+          <FollowCreatorButton
+            initialIsFollowing={!!isFollowing}
+            size="lg"
+            creatorId={userData?.id!}
+          />
           <GithubButton
             size={"lg"}
             githubUsername={userData?.githubUsername!}

@@ -21,11 +21,13 @@ export function CreatorCard({
   videoId,
   likeCount: initialLikeCount,
   isLiked: initialIsLiked,
+  isFollowing,
 }: {
   user: User;
   videoId: string;
   likeCount: number;
   isLiked: boolean;
+  isFollowing: boolean;
 }) {
   const router = useRouter();
 
@@ -62,7 +64,10 @@ export function CreatorCard({
           {user._count.followers} followers
         </p>
       </div>
-      <FollowCreatorButton creatorId={user.id} />
+      <FollowCreatorButton
+        initialIsFollowing={isFollowing}
+        creatorId={user.id}
+      />
       <form
         action={likeAction}
         className="ml-auto"
