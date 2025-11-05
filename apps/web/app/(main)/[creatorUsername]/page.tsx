@@ -1,4 +1,5 @@
 import VideoCard from "@/components/content/video-card";
+import FollowCreatorButton from "@/components/creator/follow-creator";
 import GithubButton from "@/components/socials/social";
 import { auth } from "@/lib/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
@@ -62,9 +63,7 @@ export default async function CreatorPage({
           </div>
         </div>
         <div className="flex gap-3 items-center h-full">
-          <Button size={"lg"} className="text-lg">
-            Follow
-          </Button>
+          <FollowCreatorButton size="lg" creatorId={userData?.id!} />
           <GithubButton
             size={"lg"}
             githubUsername={userData?.githubUsername!}

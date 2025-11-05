@@ -1,12 +1,11 @@
 "use client";
 
-import { followCreatorAction } from "@/lib/actions/follow-creator";
 import { likeVideoAction } from "@/lib/actions/like-video";
 import { Button } from "@workspace/ui/components/button";
-import { Github, Star, Banknote, Flag } from "@workspace/ui/icons";
+import { Star, Flag } from "@workspace/ui/icons";
 import { useRouter } from "next/navigation";
 import { useActionState } from "react";
-import { toast } from "sonner";
+import FollowCreatorButton from "./follow-creator";
 
 interface User {
   id: string;
@@ -63,17 +62,7 @@ export function CreatorCard({
           {user._count.followers} followers
         </p>
       </div>
-      <Button
-        variant="default"
-        className="ml-6"
-        onClick={async (e) => {
-          e.stopPropagation();
-          const res = await followCreatorAction(user.id);
-          res.success ? toast.message(res.message) : toast.error(res.message);
-        }}
-      >
-        Follow
-      </Button>
+      <FollowCreatorButton creatorId={user.id} />
       <form
         action={likeAction}
         className="ml-auto"
