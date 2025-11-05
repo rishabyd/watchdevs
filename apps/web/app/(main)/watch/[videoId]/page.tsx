@@ -50,7 +50,7 @@ export default async function VideoPage({ params }: PageProps) {
   ]);
 
   const isFollowing = followCount > 0;
-
+  const isMe = session?.user.id === video?.user.id;
   if (!video || !video.hlsUrl) {
     notFound();
   }
@@ -75,6 +75,7 @@ export default async function VideoPage({ params }: PageProps) {
         <div className="flex">
           <div className="flex-4/6 w-full">
             <CreatorCard
+              isMe={isMe}
               isFollowing={!!isFollowing}
               videoId={videoId}
               user={video.user}

@@ -22,15 +22,16 @@ export function CreatorCard({
   likeCount: initialLikeCount,
   isLiked: initialIsLiked,
   isFollowing,
+  isMe,
 }: {
   user: User;
   videoId: string;
   likeCount: number;
   isLiked: boolean;
   isFollowing: boolean;
+  isMe: boolean;
 }) {
   const router = useRouter();
-
   // Like button state management
   const [likeState, likeAction, isLikePending] = useActionState(
     async (prevState: { liked: boolean; count: number }) => {
@@ -64,10 +65,12 @@ export function CreatorCard({
           {user._count.followers} followers
         </p>
       </div>
-      <FollowCreatorButton
-        initialIsFollowing={isFollowing}
-        creatorId={user.id}
-      />
+      {!isMe && (
+        <FollowCreatorButton
+          initialIsFollowing={isFollowing}
+          creatorId={user.id}
+        />
+      )}
       <form
         action={likeAction}
         className="ml-auto"

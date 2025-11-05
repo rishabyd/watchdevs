@@ -4,7 +4,6 @@ import GithubButton from "@/components/socials/social";
 import { auth } from "@/lib/auth";
 import { Avatar, AvatarImage, AvatarFallback } from "@radix-ui/react-avatar";
 import { prisma } from "@repo/db";
-import { Button } from "@workspace/ui/components/button";
 import { headers } from "next/headers";
 
 export default async function CreatorPage({
@@ -45,6 +44,7 @@ export default async function CreatorPage({
         followingId: userData?.id!,
       },
     })) > 0;
+  const isMe = session?.user.id === userData?.id;
 
   return (
     <div className="mt-14 flex-col flex gap-2">
@@ -69,11 +69,13 @@ export default async function CreatorPage({
           </div>
         </div>
         <div className="flex gap-3 items-center h-full">
-          <FollowCreatorButton
-            initialIsFollowing={!!isFollowing}
-            size="lg"
-            creatorId={userData?.id!}
-          />
+          {!isMe && (
+            <FollowCreatorButton
+              initialIsFollowing={!!isFollowing}
+              size="lg"
+              creatorId={userData?.id!}
+            />
+          )}
           <GithubButton
             size={"lg"}
             githubUsername={userData?.githubUsername!}
