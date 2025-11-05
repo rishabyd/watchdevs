@@ -10,7 +10,6 @@ type PageProps = {
 
 export default async function VideoPage({ params }: PageProps) {
   const { videoId } = await params;
-
   const video = await prisma.video.findUnique({
     where: { id: videoId },
     select: {
@@ -20,6 +19,7 @@ export default async function VideoPage({ params }: PageProps) {
       hlsUrl: true,
       viewCount: true,
       createdAt: true,
+      likeCount: true,
       user: {
         select: {
           id: true,
@@ -27,9 +27,13 @@ export default async function VideoPage({ params }: PageProps) {
           profileUsername: true,
           githubUsername: true,
           image: true,
+          _count: { select: { followers: true } },
         },
       },
     },
+  });
+  const isLiked = await prisma.videoLike.findFirst({
+    where: { videoId, userId: video?.user.id },
   });
 
   if (!video || !video.hlsUrl) {
@@ -55,7 +59,12 @@ export default async function VideoPage({ params }: PageProps) {
         <h1 className="text-2xl font-bold">{video.title}</h1>
         <div className="flex">
           <div className="flex-4/6 w-full">
-            <CreatorCard user={video.user} />
+            <CreatorCard
+              videoId={videoId}
+              user={video.user}
+              likeCount={video.likeCount}
+              isLiked={!!isLiked}
+            />
 
             <div>
               {video.description && (

@@ -1,10 +1,12 @@
 "use client";
 
+import { followCreatorAction } from "@/lib/actions/follow-creator";
+import { likeVideoAction } from "@/lib/actions/like-video";
 import { Button } from "@workspace/ui/components/button";
-import { Github, Star, Banknote } from "@workspace/ui/icons";
-import Link from "next/link";
+import { Github, Star, Banknote, Flag } from "@workspace/ui/icons";
 import { useRouter } from "next/navigation";
-import GithubButton from "../socials/social";
+import { useActionState } from "react";
+import { toast } from "sonner";
 
 interface User {
   id: string;
@@ -12,10 +14,34 @@ interface User {
   profileUsername: string | null;
   githubUsername: string | null;
   image: string | null;
+  _count: { followers: number };
 }
 
-export function CreatorCard({ user }: { user: User }) {
+export function CreatorCard({
+  user,
+  videoId,
+  likeCount: initialLikeCount,
+  isLiked: initialIsLiked,
+}: {
+  user: User;
+  videoId: string;
+  likeCount: number;
+  isLiked: boolean;
+}) {
   const router = useRouter();
+
+  // Like button state management
+  const [likeState, likeAction, isLikePending] = useActionState(
+    async (prevState: { liked: boolean; count: number }) => {
+      await likeVideoAction(videoId);
+
+      return {
+        liked: !prevState.liked,
+        count: prevState.liked ? prevState.count - 1 : prevState.count + 1,
+      };
+    },
+    { liked: initialIsLiked, count: initialLikeCount },
+  );
 
   return (
     <div
@@ -33,30 +59,52 @@ export function CreatorCard({ user }: { user: User }) {
       )}
       <div className="flex-col gap-0">
         <p className="font-medium text-lg p-0">{user.name}</p>
+        <p className="text-muted-foreground text-xs p-0">
+          {user._count.followers} followers
+        </p>
       </div>
-      <Button variant="default" onClick={(e) => e.stopPropagation()}>
+      <Button
+        variant="default"
+        className="ml-6"
+        onClick={async (e) => {
+          e.stopPropagation();
+          const res = await followCreatorAction(user.id);
+          res.success ? toast.message(res.message) : toast.error(res.message);
+        }}
+      >
         Follow
       </Button>
-      <Button
-        title="I like this"
+      <form
+        action={likeAction}
         className="ml-auto"
-        variant="outline"
         onClick={(e) => e.stopPropagation()}
       >
-        <Star />
-      </Button>
+        <Button
+          title="I like this"
+          variant="outline"
+          type="submit"
+          disabled={isLikePending}
+        >
+          {likeState.liked ? (
+            <Star
+              className="text-foreground"
+              fill="currentColor"
+              stroke="currentColor"
+            />
+          ) : (
+            <Star />
+          )}{" "}
+          {likeState.count}
+        </Button>
+      </form>
       <Button
-        title="Support the creator"
+        title="Report this video"
         className=""
         variant="outline"
         onClick={(e) => e.stopPropagation()}
       >
-        <Banknote />
-        {"Support"}
+        <Flag /> Report
       </Button>
-      {user.githubUsername && (
-        <GithubButton githubUsername={user.githubUsername} />
-      )}
     </div>
   );
 }

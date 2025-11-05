@@ -26,7 +26,7 @@ export default async function RootLayout({
       >
         <Providers>
           {children}
-          <Toaster richColors position="bottom-right" closeButton />
+          <Toaster richColors position="bottom-right" />
         </Providers>
       </body>
     </html>

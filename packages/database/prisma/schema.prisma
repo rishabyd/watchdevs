@@ -168,25 +168,25 @@ model Comment {
 }
 
 model VideoLike {
-  videoId   String   // Changed to String
+  videoId   String
   video     Video    @relation(fields: [videoId], references: [id], onDelete: Cascade)
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
-  @@id([videoId, userId])  // Composite key, removed autoincrement
+  @@id([videoId, userId])
   @@index([videoId])
   @@index([userId])
 }
 
-model Follow {
-  followerId  String
-  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
-  followingId String
-  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
+  model Follow {
+    followerId  String
+    follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+    followingId String
+    following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+    createdAt   DateTime @default(now())
 
-  @@id([followerId, followingId])
-  @@index([followerId])
-  @@index([followingId])
-}
+    @@id([followerId, followingId])
+    @@index([followerId])
+    @@index([followingId])
+  }
