@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "db:generate": "prisma generate --no-engine",
+    "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev --skip-generate",
     "db:push": "prisma db push",
     "db:studio": "prisma studio"
