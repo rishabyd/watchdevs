@@ -41,7 +41,7 @@ async function getVideoFeed(page = 0, limit = 20) {
   return cleanData;
 }
 
-export default async function DashboardPage() {
+export default async function HomePage() {
   const initialData = await getVideoFeed(0, 20);
 
   return (

@@ -19,7 +19,7 @@ export function FeedClient({ initialData }: { initialData: any[] }) {
     fetcher,
     {
       fallbackData: [initialData],
-      revalidateOnFocus: true,
+      revalidateOnFocus: false,
       revalidateOnMount: false,
     },
   );
