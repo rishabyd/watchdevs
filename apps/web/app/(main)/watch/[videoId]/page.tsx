@@ -1,3 +1,4 @@
+import CommentSection from "@/components/content/comment-section";
 import VideoPlayer from "@/components/content/video-player";
 import { CreatorCard } from "@/components/creator/creator-card";
 import { auth } from "@/lib/auth";
@@ -73,7 +74,7 @@ export default async function VideoPage({ params }: PageProps) {
       <div className="space-y-4 mt-3 px-16">
         <h1 className="text-2xl font-bold">{video.title}</h1>
         <div className="flex">
-          <div className="flex-4/6 w-full">
+          <div className="flex-4/6  w-full">
             <CreatorCard
               isMe={isMe}
               isFollowing={!!isFollowing}
@@ -83,16 +84,23 @@ export default async function VideoPage({ params }: PageProps) {
               isLiked={!!isLiked}
             />
 
-            <div>
+            <div className="border border-t-0 p-2 px-3">
+              <div className="flex items-center gap-2.5">
+                <p className="text-sm text-muted-foreground">
+                  {Number(video.viewCount).toLocaleString()} views
+                </p>
+
+                <p>•</p>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(video.createdAt).toLocaleDateString()}
+                </p>
+              </div>{" "}
               {video.description && (
                 <p className="text-muted-foreground">{video.description}</p>
               )}
-              <p className="text-sm text-muted-foreground">
-                {new Date(video.createdAt).toLocaleDateString()}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {Number(video.viewCount).toLocaleString()} views
-              </p>
+            </div>
+            <div className="border  p-2 px-3 border-t-0">
+              <CommentSection videoId={video.id} />
             </div>
           </div>
           <div className="flex-2/6">{"videos feed"}</div>

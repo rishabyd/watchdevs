@@ -24,7 +24,7 @@ export default async function DashboardLayout({
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
-      <div className="z-10 fixed">
+      <div className="z-50 fixed">
         <SiteHeader />
       </div>
       <SidebarInset>
